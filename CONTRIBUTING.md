@@ -63,10 +63,10 @@ URLs in `pnpm-lock.yaml`.
 - **No real data in fixtures, tests, or screenshots.** Use the synthetic seed
   dataset. Screenshots in issues must be scrubbed of account numbers, contact
   names and balances.
-- **Translations** live alongside the UI strings; English is the source of
-  truth and other languages follow it.
-- **Accessibility is a gate, not a nicety** — keyboard reachable, labelled
-  controls, sufficient contrast in both themes.
+- **Translations** live in `src/i18n/locales/` (en and uk); update both
+  together.
+- **Accessibility is a gate, not a nicety** — accessible labels on
+  interactive elements, readable text sizes.
 
 ## Commits and branches
 

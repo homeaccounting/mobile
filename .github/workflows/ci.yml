@@ -35,7 +35,7 @@ jobs:
       - run: pnpm exec eslint .
       - run: pnpm exec prettier --check .
       - run: pnpm exec jest --ci
-      # Non-blocking: the org npm mirror used to lock dependencies lags public npm by a patch release for a few Expo packages (tracker#87). Remove once `expo install --fix` can be run.
+      # Non-blocking: the org npm mirror used to lock dependencies lags public npm by a patch release for a few Expo packages (tracker#95). Remove once `expo install --fix` can be run.
       # expo-doctor is not a project dependency, so `pnpm exec` cannot find it; dlx fetches it.
       - run: pnpm dlx expo-doctor
         continue-on-error: true

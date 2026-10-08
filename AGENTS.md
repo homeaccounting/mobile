@@ -50,7 +50,7 @@ just clean          # remove node_modules/.expo/ios/android/coverage
 app/       # Expo Router routes only (_layout.tsx, index.tsx, …)
 src/
 ├── api/   # Typed HTTP client, ported from web and trimmed to the MVP
-├── i18n/  # i18next setup and en.json / uk.json
+├── i18n/  # i18next setup; strings in locales/{en,uk}.json
 └── lib/   # Utilities (queryClient, …)
 test/      # Tests for routes and shared test helpers (fetch.ts)
 ```
@@ -65,7 +65,7 @@ Jest via `jest-expo`, with React Native Testing Library.
 
 - **Never put tests under `app/`.** Expo Router bundles every file in `app/` as a route. Tests live in `test/` or next to the module under `src/` (`*.test.ts` / `*.test.tsx`).
 - API tests use the fetch helper in `test/fetch.ts`.
-- Every new user-facing string goes in both `src/i18n/en.json` and `src/i18n/uk.json`.
+- Every new user-facing string goes in both `src/i18n/locales/en.json` and `src/i18n/locales/uk.json`.
 
 ```bash
 pnpm exec jest -t "name"        # filter by test name
