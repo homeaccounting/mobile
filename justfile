@@ -48,7 +48,7 @@ test:
 
 # Expo's project health check (dependency versions, config)
 doctor:
-    pnpm exec expo-doctor
+    pnpm dlx expo-doctor
 
 # Bundle for iOS and Android without a simulator (catches Metro/resolution errors)
 verify-native:
