@@ -1,6 +1,6 @@
 import { act, render, screen } from '@testing-library/react-native';
 import i18n from '@/i18n';
-import Home from './index';
+import Home from '../app/index';
 
 it('renders the translated title and tagline', async () => {
   await i18n.changeLanguage('uk');
