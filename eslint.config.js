@@ -13,7 +13,7 @@ module.exports = defineConfig([
     },
   },
   {
-    files: ['eslint.config.js'],
+    files: ['eslint.config.js', 'babel.config.js', 'metro.config.js', 'tailwind.config.js'],
     languageOptions: { globals: { __dirname: 'readonly' } },
   },
 ]);
