@@ -5,3 +5,4 @@ android
 dist
 coverage
 pnpm-lock.yaml
+assets/expo.icon

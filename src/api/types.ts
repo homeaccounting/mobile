@@ -36,7 +36,7 @@ export interface AccountSubtype {
 }
 
 // Account lifecycle status. Mirrors backend fromAccountStatus
-// (../server-infra/src/Web/Types.hs:793-795): every account starts "Opened".
+// (../backend/src/Web/Types.hs:793-795): every account starts "Opened".
 export type AccountStatus = 'Opened' | 'Closed';
 
 // Account roles — mirrors backend AccountRole (Domain/Core/Types.hs). Wire tokens
@@ -76,7 +76,7 @@ export interface TransactionResponse {
   date: ISO8601;
 }
 
-// Prompt (natural-language) DTOs — mirror server-infra/src/Web/API/PromptAPI.hs.
+// Prompt (natural-language) DTOs — mirror backend/src/Web/API/PromptAPI.hs.
 // PromptRequest { text :: Text, account :: Maybe AccountId }.
 export interface PromptRequest {
   text: string;
