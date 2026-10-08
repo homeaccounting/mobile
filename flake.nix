@@ -19,7 +19,7 @@
         devShells.default = pkgs.mkShell {
           buildInputs = devDependencies;
           shellHook = ''
-            echo "💰 Accounting Mobile Development Environment"
+            echo "💰 HomeAccounting Mobile Development Environment"
             echo "📦 Node version: $(node --version)"
             echo "📦 pnpm version: $(pnpm --version)"
             echo "🔧 Quick Commands (using just):"
@@ -30,8 +30,9 @@
             echo "  • just android     - Run on Android"
             echo "  • just test        - Run tests"
             echo "  • just check       - typecheck + lint + format-check"
+            echo "  • just verify-native - export iOS/Android bundles (no simulator)"
             echo ""
-            echo "🚀 Get started: just dev-setup"
+            echo "🚀 Get started: just install && just ios"
           '';
         };
       });
