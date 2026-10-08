@@ -12,7 +12,7 @@ install:
 # Rewrite private-registry tarball URLs in pnpm-lock.yaml to public npm (CI
 # can only reach public npm; hashes match either mirror).
 lockfile-fix:
-    @sed -i.bak 's|https://npm.dev.wixpress.com/\(artifactory/\)\?api/npm/npm-repos/|https://registry.npmjs.org/|g' pnpm-lock.yaml
+    @sed -E -i.bak 's#https://npm\.dev\.wixpress\.com/(artifactory/)?api/npm/npm-repos/#https://registry.npmjs.org/#g' pnpm-lock.yaml
     @rm -f pnpm-lock.yaml.bak
     @if grep -q wixpress pnpm-lock.yaml; then echo "✗ Lockfile still references wixpress"; exit 1; else echo "✓ Lockfile points at public npm only"; fi
 
