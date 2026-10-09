@@ -65,7 +65,10 @@
           cocoapods
         ];
       in {
-        devShells.default = pkgs.mkShell {
+        # NoCC: nothing is compiled by the shell itself, and the darwin cc
+        # wrapper would export DEVELOPER_DIR/SDKROOT for nixpkgs' apple-sdk,
+        # hiding Xcode from xcodebuild/simctl.
+        devShells.default = pkgs.mkShellNoCC {
           buildInputs = devDependencies;
           JAVA_HOME = pkgs.jdk17.home;
           ANDROID_HOME = "${androidSdk}/libexec/android-sdk";
