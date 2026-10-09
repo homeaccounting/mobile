@@ -4,15 +4,15 @@ The HomeAccounting iOS and Android app, built with Expo and React Native. It tal
 
 ## Prerequisites
 
-- [Nix](https://nixos.org/) (provides Node 22, pnpm 10 and `just`), or Node 22 + pnpm 10 + `just` installed manually
-- Xcode (iOS) and/or the Android SDK (Android)
+- [Nix](https://nixos.org/). `nix develop` provides Node 22, pnpm 10, `just`, Watchman, CocoaPods, JDK 17 and the Android SDK (platform, build tools, NDK, emulator and a system image)
+- Xcode, for iOS only. It can't be packaged in a project shell, so install it system-wide (App Store); the maintainers' machines get it from their Nix system config
 
 ## Quick start
 
 ```bash
 nix develop     # or rely on direnv
 just install
-just ios        # or: just android
+just ios        # or: just emulator, then just android in another shell
 ```
 
 The app runs as a dev build, not in Expo Go. Run `just --list` to see every recipe.

@@ -28,6 +28,17 @@ ios:
 android:
     pnpm android
 
+# Create the Android emulator (first run) from the flake's system image, then start it
+emulator:
+    #!/usr/bin/env sh
+    set -eu
+    avd=homeaccounting
+    if ! avdmanager list avd -c | grep -qx "$avd"; then
+        image=$(ls -d "$ANDROID_HOME"/system-images/*/*/* | sort -V | tail -n1)
+        echo no | avdmanager create avd -n "$avd" -k "$(echo "${image#"$ANDROID_HOME"/}" | tr / ';')"
+    fi
+    emulator -avd "$avd"
+
 typecheck:
     pnpm exec tsc --noEmit
 

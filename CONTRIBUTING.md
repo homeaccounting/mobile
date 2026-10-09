@@ -33,7 +33,7 @@ Good first contributions are labelled
 ## Development setup
 
 ```bash
-nix develop          # Node 22, pnpm, just (or install pnpm yourself)
+nix develop          # Node, pnpm, just, CocoaPods, JDK 17, Android SDK
 just install
 just ios             # or: just android (dev build, not Expo Go)
 ```

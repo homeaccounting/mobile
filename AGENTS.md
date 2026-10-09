@@ -15,7 +15,9 @@ Expo + React Native app (iOS and Android) that consumes the [HomeAccounting back
 
 ## Development Environment
 
-The project uses **Nix** to manage development tooling. Run `nix develop` at the start of each session (or rely on `direnv` via `.envrc`) to put `node`, `pnpm`, and `just` on `PATH`. Without Nix, install Node 22, pnpm 10, and `just` manually.
+The project uses **Nix** to manage development tooling. Run `nix develop` at the start of each session (or rely on `direnv` via `.envrc`). It provides `node`, `pnpm`, `just`, Watchman, CocoaPods (macOS), JDK 17 (`JAVA_HOME`) and the Android SDK (`ANDROID_HOME`: platforms 35 and 36, build tools, NDK, CMake, emulator and system images). Do not install project tooling globally; add it to `flake.nix`. The Android versions in `flake.nix` follow `node_modules/react-native/gradle/libs.versions.toml`; bump them together with the Expo SDK.
+
+The one thing a project shell cannot provide is **Xcode** (licence-bound, not in nixpkgs). Install it system-wide; maintainer machines get it declaratively from the Nix system config (Mac App Store via `mas`). Machine-level settings such as the npm registry also belong in the system config, not in this repo.
 
 Local installs may go through the org npm mirror, so run `just install` (which rewrites the lockfile to public npm URLs) rather than bare `pnpm install`, and never commit a mirror `.npmrc`. The committed `pnpm-lock.yaml` must not contain `wixpress`.
 
@@ -30,6 +32,7 @@ just install        # pnpm install + lockfile-fix
 just run            # Metro dev server for an installed dev build
 just ios            # build and launch on the iOS simulator
 just android        # build and launch on an Android emulator/device
+just emulator       # create (first run) and start the Android emulator
 just typecheck      # tsc --noEmit
 just lint           # eslint .
 just format         # prettier --write .
