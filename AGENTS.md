@@ -17,35 +17,36 @@ Expo + React Native app (iOS and Android) that consumes the [HomeAccounting back
 
 The project uses **Nix** to manage development tooling. Run `nix develop` at the start of each session (or rely on `direnv` via `.envrc`). It provides `node`, `pnpm`, `just`, Watchman, CocoaPods (macOS), JDK 17 (`JAVA_HOME`) and the Android SDK (`ANDROID_HOME`: platforms 35 and 36, build tools, NDK, CMake, emulator and system images). Do not install project tooling globally; add it to `flake.nix`. The Android versions in `flake.nix` follow `node_modules/react-native/gradle/libs.versions.toml`; bump them together with the Expo SDK.
 
-The one thing a project shell cannot provide is **Xcode** (licence-bound, not in nixpkgs). Install it system-wide; maintainer machines get it declaratively from the Nix system config (Mac App Store via `mas`). After installing or updating Xcode, open it once: its first-run dialogs accept the licence, install the simulator components and offer the iOS simulator runtime. If you skip that, `just ios` fails with a message naming the missing step (`sudo xcodebuild -license`, `xcodebuild -runFirstLaunch`, `xcodebuild -downloadPlatform iOS`). Machine-level settings such as the npm registry also belong in the system config, not in this repo.
+The one thing a project shell cannot provide is **Xcode** (licence-bound, not in nixpkgs). Install it system-wide; maintainer machines get it declaratively from the Nix system config (Mac App Store via `mas`). After installing or updating Xcode, run `just ios-setup` once: it selects Xcode, accepts the licence, installs the simulator components and downloads the iOS runtime, skipping whatever is already done. Machine-level settings such as the npm registry also belong in the system config, not in this repo.
 
 Local installs may go through the org npm mirror, so run `just install` (which rewrites the lockfile to public npm URLs) rather than bare `pnpm install`, and never commit a mirror `.npmrc`. The committed `pnpm-lock.yaml` must not contain `wixpress`.
 
-The app runs as a **dev build** (`just ios` / `just android`), not Expo Go. `ios/` and `android/` are generated and gitignored — change native config through `app.json` / config plugins only.
+The app runs as a **dev build** (`just ios-run` / `just android-run`), not Expo Go. `ios/` and `android/` are generated and gitignored — change native config through `app.json` / config plugins only.
 
 ## Common Commands
 
 All commands use `just` (task runner). Run `just --list` to see all recipes.
 
 ```bash
-just install        # pnpm install + lockfile-fix
-just run            # Metro dev server for an installed dev build
-just ios            # build and launch on the iOS simulator
-just android        # build and launch on an Android emulator/device
-just emulator       # create (first run) and start the Android emulator
-just typecheck      # tsc --noEmit
-just lint           # eslint .
-just format         # prettier --write .
-just format-check   # prettier --check .
-just check          # typecheck + lint + format-check
-just test           # jest
-just doctor         # expo-doctor
-just verify-native  # expo export for ios + android into a temp dir (no simulator needed)
-just lockfile-fix   # rewrite private-registry URLs in pnpm-lock.yaml
-just clean          # remove node_modules/.expo/ios/android/coverage
+just install            # pnpm install + lockfile-fix
+just metro-start        # Metro dev server for an installed dev build
+just ios-setup          # one-time Xcode setup (licence, simulator components, iOS runtime)
+just ios-run            # build and launch on the iOS simulator
+just android-emulator   # create (first run) and start the Android emulator
+just android-run        # build and launch on an Android emulator/device
+just typecheck          # tsc --noEmit
+just lint               # eslint .
+just format             # prettier --write .
+just format-check       # prettier --check .
+just check              # typecheck + lint + format-check
+just test               # jest
+just expo-doctor        # expo-doctor
+just native-verify      # expo export for ios + android into a temp dir (no simulator needed)
+just lockfile-fix       # rewrite private-registry URLs in pnpm-lock.yaml
+just clean              # remove node_modules/.expo/ios/android/coverage
 ```
 
-`just verify-native` is the way to validate native bundling on machines without a simulator. For native config changes, also run `pnpm exec expo prebuild --no-install --clean` (regenerates the gitignored `ios/` and `android/`; run `just clean` afterwards if you don't want them lying around).
+`just native-verify` is the way to validate native bundling on machines without a simulator. For native config changes, also run `pnpm exec expo prebuild --no-install --clean` (regenerates the gitignored `ios/` and `android/`; run `just clean` afterwards if you don't want them lying around).
 
 ## Architecture
 

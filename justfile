@@ -9,27 +9,30 @@ install:
     pnpm install
     @just lockfile-fix
 
-# Rewrite private-registry tarball URLs in pnpm-lock.yaml to public npm (CI
-# can only reach public npm; hashes match either mirror).
+# Rewrite private-registry URLs in pnpm-lock.yaml to public npm (CI uses public npm)
 lockfile-fix:
     @sed -E -i.bak 's#https://npm\.dev\.wixpress\.com/(artifactory/)?api/npm/npm-repos/#https://registry.npmjs.org/#g' pnpm-lock.yaml
     @rm -f pnpm-lock.yaml.bak
     @if grep -q wixpress pnpm-lock.yaml; then echo "✗ Lockfile still references wixpress"; exit 1; else echo "✓ Lockfile points at public npm only"; fi
 
 # Start the Metro dev server for an installed dev build
-run:
+metro-start:
     pnpm start
 
 # Build and launch the dev build on the iOS simulator
-ios:
+ios-run:
     pnpm ios
 
+# One-time Xcode setup after install/update: licence, simulator components, iOS runtime (safe to re-run)
+ios-setup:
+    ./scripts/ios-setup.sh
+
 # Build and launch the dev build on an Android emulator/device
-android:
+android-run:
     pnpm android
 
 # Create the Android emulator (first run) from the flake's system image, then start it
-emulator:
+android-emulator:
     #!/usr/bin/env sh
     set -eu
     avd=homeaccounting
@@ -58,11 +61,11 @@ test:
     pnpm exec jest
 
 # Expo's project health check (dependency versions, config)
-doctor:
+expo-doctor:
     pnpm dlx expo-doctor
 
 # Bundle for iOS and Android without a simulator (catches Metro/resolution errors)
-verify-native:
+native-verify:
     #!/usr/bin/env sh
     set -eu
     out=$(mktemp -d)

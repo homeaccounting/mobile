@@ -35,7 +35,8 @@ Good first contributions are labelled
 ```bash
 nix develop          # Node, pnpm, just, CocoaPods, JDK 17, Android SDK
 just install
-just ios             # or: just emulator, then just android (dev build, not Expo Go)
+just ios-setup       # iOS only, once per Xcode install/update
+just ios-run             # or: just android-emulator, then just android-run (dev build, not Expo Go)
 ```
 
 `just --list` shows every recipe. What CI checks, and what you should run before
