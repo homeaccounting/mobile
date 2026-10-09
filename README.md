@@ -7,6 +7,28 @@ The HomeAccounting iOS and Android app, built with Expo and React Native. It tal
 - [Nix](https://nixos.org/). `nix develop` provides Node 22, pnpm 10, `just`, Watchman, CocoaPods, JDK 17 and the Android SDK (platforms 35 and 36, build tools, NDK, emulator and system images). The first run downloads several GB, mostly the Android SDK; later runs are fast.
 - Xcode, for iOS only. It can't be packaged in a project shell, so install it system-wide (App Store); the maintainers' machines get it from their Nix system config. After installing or updating it, **open Xcode once**: its first-run dialogs accept the licence, install the simulator components and offer the iOS simulator runtime.
 
+### Installing the prerequisites from the command line
+
+```bash
+# Nix, with flakes enabled (Determinate Systems installer; the official
+# nixos.org installer also works, then add
+# `experimental-features = nix-command flakes` to ~/.config/nix/nix.conf)
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+
+# Xcode (iOS only), without the App Store UI. mas needs you signed into the
+# App Store once; xcodes asks for an Apple ID instead.
+brew install mas && mas install 497799835          # or: brew install xcodes && xcodes install --latest
+
+# Xcode's first-run steps, instead of opening it once
+sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+sudo xcodebuild -license accept
+sudo xcodebuild -runFirstLaunch
+xcodebuild -downloadPlatform iOS                    # simulator runtime, ~8 GB
+
+# Optional: load the dev shell automatically on cd
+direnv allow
+```
+
 ## Quick start
 
 ```bash
