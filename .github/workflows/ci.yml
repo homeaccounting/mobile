@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  pull_request:
+    branches: ['**']
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Guard against private-registry URLs in lockfile
+        run: |
+          if grep -q wixpress pnpm-lock.yaml; then
+            echo "::error::pnpm-lock.yaml contains private-registry tarball URLs. Run 'just lockfile-fix' and recommit."
+            exit 1
+          fi
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec tsc --noEmit
+      - run: pnpm exec eslint .
+      - run: pnpm exec prettier --check .
+      - run: pnpm exec jest --ci
+      # Non-blocking: the org npm mirror used to lock dependencies lags public npm by a patch release for a few Expo packages (tracker#95). Remove once `expo install --fix` can be run.
+      # expo-doctor is not a project dependency, so `pnpm exec` cannot find it; dlx fetches it.
+      - run: pnpm dlx expo-doctor
+        continue-on-error: true
+
+  # Stable aggregate check named "CI" — the single required status check shared
+  # across repos via the org ruleset (job names differ per repo).
+  ci:
+    name: CI
+    needs: [build-and-test]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require build-and-test to pass
+        run: |
+          echo "build-and-test: ${{ needs.build-and-test.result }}"
+          test "${{ needs.build-and-test.result }}" = "success"
