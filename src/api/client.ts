@@ -3,7 +3,24 @@ import type { ApiErrorShape } from './types';
 interface ApiClientOptions {
   getBaseUrl: () => string;
   getToken: () => string | null;
-  onUnauthorized: () => void;
+  /** Rotate tokens after a 401. Resolves true when a new access token is stored. */
+  refreshSession: () => Promise<boolean>;
+  timeoutMs?: number;
+}
+
+export interface RequestOpts {
+  /** false: no Authorization header and no refresh (auth endpoints). */
+  auth?: boolean;
+}
+
+const DEFAULT_TIMEOUT_MS = 15000;
+
+export class NetworkError extends Error {
+  constructor(cause?: unknown) {
+    super('Network request failed');
+    this.name = 'NetworkError';
+    this.cause = cause;
+  }
 }
 
 export class ApiError extends Error {
@@ -21,28 +38,66 @@ export class ApiError extends Error {
 }
 
 export class ApiClient {
+  private refreshing: Promise<boolean> | null = null;
+
   constructor(private readonly opts: ApiClientOptions) {}
 
-  get<T>(path: string): Promise<T> {
-    return this.request<T>(path, { method: 'GET' });
+  get<T>(path: string, opts?: RequestOpts): Promise<T> {
+    return this.request<T>(path, { method: 'GET' }, opts);
   }
 
-  post<T>(path: string, body?: unknown): Promise<T> {
-    return this.request<T>(path, {
-      method: 'POST',
-      body: body === undefined ? undefined : JSON.stringify(body),
+  post<T>(path: string, body?: unknown, opts?: RequestOpts): Promise<T> {
+    return this.request<T>(
+      path,
+      {
+        method: 'POST',
+        body: body === undefined ? undefined : JSON.stringify(body),
+      },
+      opts,
+    );
+  }
+
+  private refreshOnce(): Promise<boolean> {
+    this.refreshing ??= this.opts.refreshSession().finally(() => {
+      this.refreshing = null;
     });
+    return this.refreshing;
   }
 
-  private async request<T>(path: string, init: RequestInit): Promise<T> {
+  private async send(path: string, init: RequestInit, token: string | null): Promise<Response> {
     const headers = new Headers(init.headers ?? {});
     if (init.body) headers.set('Content-Type', 'application/json');
-    const token = this.opts.getToken();
     if (token) headers.set('Authorization', `Bearer ${token}`);
 
-    const res = await fetch(`${this.opts.getBaseUrl()}${path}`, { ...init, headers });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.opts.timeoutMs ?? DEFAULT_TIMEOUT_MS);
+    try {
+      return await fetch(`${this.opts.getBaseUrl()}${path}`, {
+        ...init,
+        headers,
+        signal: controller.signal,
+      });
+    } catch (e) {
+      throw new NetworkError(e);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
 
-    if (res.status === 401) this.opts.onUnauthorized();
+  private async request<T>(path: string, init: RequestInit, opts?: RequestOpts): Promise<T> {
+    const auth = opts?.auth !== false;
+    const sent = auth ? this.opts.getToken() : null;
+    let res = await this.send(path, init, sent);
+
+    if (res.status === 401 && auth && sent) {
+      const current = this.opts.getToken();
+      if (current && current !== sent) {
+        res = await this.send(path, init, current);
+      } else if (await this.refreshOnce()) {
+        const token = this.opts.getToken();
+        if (token) res = await this.send(path, init, token);
+      }
+    }
 
     if (!res.ok) {
       const body = await safeReadErrorBody(res);
@@ -58,7 +113,11 @@ export class ApiClient {
     if (res.status === 204) return undefined as T;
     const text = await res.text();
     if (!text) return undefined as T;
-    return JSON.parse(text) as T;
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      throw new ApiError({ status: res.status, message: 'Response is not JSON', code: 'NOT_JSON' });
+    }
   }
 }
 
