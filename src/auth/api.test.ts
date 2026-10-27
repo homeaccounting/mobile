@@ -35,6 +35,23 @@ describe('refreshSession', () => {
     expect(store.getSnapshot()).toMatchObject({ accessToken: 'a2', refreshToken: 'r2' });
   });
 
+  it('keeps the session when the refresh response lacks a token pair', async () => {
+    const store = await signedIn();
+    mockFetch((r) =>
+      r.url.endsWith('/api/auth/refresh')
+        ? { status: 200, body: { token: 'a2' } }
+        : { status: 401 },
+    );
+    await expect(createAppClient(store).get('/api/accounts')).rejects.toMatchObject({
+      code: 'NOT_JSON',
+    });
+    expect(store.getSnapshot()).toEqual({
+      serverUrl: 'https://h',
+      accessToken: 'a1',
+      refreshToken: 'r1',
+    });
+  });
+
   it('clears the session only on a 401 from /refresh', async () => {
     const store = await signedIn();
     mockFetch(() => ({ status: 401 }));

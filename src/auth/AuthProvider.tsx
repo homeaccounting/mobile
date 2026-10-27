@@ -9,7 +9,9 @@ import {
 } from 'react';
 import { authApi } from '@/api/auth';
 import { queryClient } from '@/lib/queryClient';
-import { createUnauthenticatedClient } from './api';
+import { ApiError } from '@/api/client';
+import { assertTokenPair, createUnauthenticatedClient } from './api';
+import { parseServerUrl } from './serverUrl';
 import { sessionStore, type SessionStore } from './session';
 
 export type AuthInput = { email: string; password: string; serverUrl: string };
@@ -56,13 +58,18 @@ export function AuthProvider({
 
   const value = useMemo<AuthContextValue>(() => {
     const start = async (op: 'login' | 'register', i: AuthInput) => {
-      const api = authApi(createUnauthenticatedClient(i.serverUrl));
-      const res = await (op === 'login' ? api.login : api.register)({
-        email: i.email.trim(),
-        password: i.password,
-      });
+      const server = parseServerUrl(i.serverUrl);
+      if (!server.ok)
+        throw new ApiError({ status: 0, code: 'INVALID_SERVER', message: 'Invalid server URL' });
+      const api = authApi(createUnauthenticatedClient(server.url));
+      const res = assertTokenPair(
+        await (op === 'login' ? api.login : api.register)({
+          email: i.email.trim(),
+          password: i.password,
+        }),
+      );
       await store.set({
-        serverUrl: i.serverUrl,
+        serverUrl: server.url,
         accessToken: res.token,
         refreshToken: res.refreshToken,
       });
@@ -74,11 +81,12 @@ export function AuthProvider({
       register: (i) => start('register', i),
       async signOut() {
         const current = store.getSnapshot();
+        await store.clear();
+        // Signing out must not wait on, or fail with, the network.
         if (current)
-          await authApi(createUnauthenticatedClient(current.serverUrl))
+          void authApi(createUnauthenticatedClient(current.serverUrl))
             .logout({ refreshToken: current.refreshToken })
             .catch(() => undefined);
-        await store.clear();
       },
     };
   }, [status, store]);

@@ -3,6 +3,15 @@ import { authApi } from '@/api/auth';
 import { HOSTED_SERVER_URL } from './serverUrl';
 import { sessionStore, type SessionStore } from './session';
 
+type TokenPair = { token: string; refreshToken: string };
+
+// A 200 from something that is not the backend must not overwrite the stored session.
+export function assertTokenPair(res: Partial<TokenPair> | undefined): TokenPair {
+  if (typeof res?.token !== 'string' || typeof res.refreshToken !== 'string')
+    throw new ApiError({ status: 200, code: 'NOT_JSON', message: 'Unexpected auth response' });
+  return { token: res.token, refreshToken: res.refreshToken };
+}
+
 export function createUnauthenticatedClient(serverUrl: string): ApiClient {
   return new ApiClient({
     getBaseUrl: () => serverUrl,
@@ -20,7 +29,7 @@ export function createAppClient(store: SessionStore): ApiClient {
       if (!current) return false;
       const sent = current.refreshToken;
       try {
-        const res = await authApi(client).refresh({ refreshToken: sent });
+        const res = assertTokenPair(await authApi(client).refresh({ refreshToken: sent }));
         // Compare-and-set: a sign-out or new sign-in during the call wins.
         if (store.getSnapshot()?.refreshToken !== sent) return false;
         await store.set({

@@ -28,7 +28,10 @@ async function setup(seed: Record<string, string> = {}) {
 }
 
 describe('AuthProvider', () => {
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
 
   it('starts signed out with an empty keystore', async () => {
     const { hook } = await setup();
@@ -55,6 +58,34 @@ describe('AuthProvider', () => {
     expect(seen[0]?.url).toBe('https://h/api/auth/login');
   });
 
+  it('rejects an insecure server URL without a request', async () => {
+    const { store, hook } = await setup();
+    const seen = mockFetch(() => ({ status: 200, body: pair }));
+    await expect(
+      act(() =>
+        hook.result.current.signIn({
+          email: 'e@x.io',
+          password: 'pw',
+          serverUrl: 'http://example.com',
+        }),
+      ),
+    ).rejects.toMatchObject({ code: 'INVALID_SERVER' });
+    expect(seen).toHaveLength(0);
+    expect(store.getSnapshot()).toBeNull();
+  });
+
+  it('rejects a 200 without a refresh token and stores nothing', async () => {
+    const { store, hook } = await setup();
+    mockFetch(() => ({ status: 200, body: { token: 'a' } }));
+    await expect(
+      act(() =>
+        hook.result.current.signIn({ email: 'e@x.io', password: 'pw', serverUrl: 'https://h' }),
+      ),
+    ).rejects.toMatchObject({ code: 'NOT_JSON' });
+    expect(store.getSnapshot()).toBeNull();
+    expect(hook.result.current.status).toBe('signedOut');
+  });
+
   it('registers against the chosen server', async () => {
     const { hook } = await setup();
     const seen = mockFetch(() => ({ status: 200, body: pair }));
@@ -76,6 +107,19 @@ describe('AuthProvider', () => {
     expect(clear).toHaveBeenCalled();
     expect(seen[0]?.url).toBe('https://h/api/auth/logout');
     expect(seen[0]?.body).toBe(JSON.stringify({ refreshToken: 'r' }));
+  });
+
+  it('signs out immediately while the logout request is still pending', async () => {
+    const { hook } = await setup(stored);
+    // The hanging request leaves the 15 s client timeout pending.
+    jest.useFakeTimers();
+    globalThis.fetch = jest.fn(() => new Promise<Response>(() => undefined)) as typeof fetch;
+    await act(() => hook.result.current.signOut());
+    expect(hook.result.current.status).toBe('signedOut');
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'https://h/api/auth/logout',
+      expect.objectContaining({ body: JSON.stringify({ refreshToken: 'r' }) }),
+    );
   });
 
   it('signs out even when logout fails, and clears the cache', async () => {
