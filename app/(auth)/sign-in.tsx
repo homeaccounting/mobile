@@ -1,5 +1,5 @@
 import { Link } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -27,10 +27,12 @@ export default function SignIn() {
   const [serverEdit, setServerInput] = useState<string | null>(null);
   const serverInput = serverEdit ?? auth.lastServerUrl ?? HOSTED_SERVER_URL;
   const [submitting, setSubmitting] = useState(false);
+  const inFlight = useRef(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; server?: string }>({});
   const [banner, setBanner] = useState<string[]>([]);
 
   async function submit() {
+    if (inFlight.current) return;
     setBanner([]);
     const server = parseServerUrl(serverInput);
     if (!server.ok) {
@@ -49,6 +51,7 @@ export default function SignIn() {
       return;
     }
     setErrors({});
+    inFlight.current = true;
     setSubmitting(true);
     try {
       await auth.signIn({ email, password, serverUrl: server.url });
@@ -56,9 +59,14 @@ export default function SignIn() {
       const key = authErrorKey(e, 'login');
       const messages = [t(`errors.${key}`)];
       // http is only ever accepted for private hosts (see parseServerUrl).
-      if (key === 'unreachable' && new URL(server.url).protocol === 'http:')
+      if (
+        key === 'unreachable' &&
+        Platform.OS === 'ios' &&
+        new URL(server.url).protocol === 'http:'
+      )
         messages.push(t('auth.localNetworkHint'));
       setBanner(messages);
+      inFlight.current = false;
       setSubmitting(false);
     }
   }

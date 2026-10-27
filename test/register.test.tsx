@@ -34,7 +34,10 @@ async function submit(email: string, password: string) {
 }
 
 describe('Register', () => {
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
 
   it('rejects a short password without a request', async () => {
     await setup();
@@ -60,5 +63,19 @@ describe('Register', () => {
     }));
     await submit('a@b.io', 'longenough');
     expect(await screen.findByText(t('errors.emailTaken'))).toBeTruthy();
+  });
+
+  it('ignores a second tap while a registration is in flight', async () => {
+    await setup();
+    // The hanging request leaves the 15 s client timeout pending.
+    jest.useFakeTimers();
+    const fetchMock = jest.fn(() => new Promise<Response>(() => undefined));
+    globalThis.fetch = fetchMock as typeof fetch;
+    await fireEvent.changeText(screen.getByLabelText(t('auth.email')), 'a@b.io');
+    await fireEvent.changeText(screen.getByLabelText(t('auth.password')), 'longenough');
+    const button = screen.getByRole('button', { name: t('auth.register') });
+    await fireEvent.press(button);
+    await fireEvent.press(button);
+    expect(fetchMock.mock.calls).toHaveLength(1);
   });
 });
