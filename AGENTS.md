@@ -56,6 +56,7 @@ just clean              # remove node_modules/.expo/ios/android/coverage
 app/       # Expo Router routes only (_layout.tsx, index.tsx, …)
 src/
 ├── api/   # Typed HTTP client, ported from web and trimmed to the MVP
+├── auth/  # Sign-in: serverUrl, session, api, errors, AuthProvider
 ├── i18n/  # i18next setup; strings in locales/{en,uk}.json
 └── lib/   # Utilities (queryClient, …)
 test/      # Tests for routes and shared test helpers (fetch.ts)
@@ -64,6 +65,13 @@ test/      # Tests for routes and shared test helpers (fetch.ts)
 - `src/api` is ported from `web`. Keep the shapes in sync with `web/src/api/types.ts`, which mirrors the backend types.
 - Path alias `@/*` → `src/*`.
 - `react-native-css-interop` is a direct dependency on purpose, pinned to the version `nativewind` uses. pnpm's strict layout otherwise hides it and Metro cannot resolve NativeWind's `jsx-runtime`. Do not remove it as "unused".
+
+## Sign-in and session
+
+- Self-hosted servers on a LAN use plain http. Android allows cleartext globally (`expo-build-properties`) because its network-security config can't express IP ranges, so `parseServerUrl` in `src/auth/serverUrl.ts` is the enforcement point: it allows http only for private hosts. iOS uses ATS `NSAllowsLocalNetworking`.
+- A crash between refresh-token rotation and the keystore write signs the user out on next launch (ADR 007 reuse rule).
+- `.expo/types` is generated; restart Metro after adding routes.
+- Tests mock `expo-secure-store` via `test/secureStore.ts`.
 
 ## Testing
 
