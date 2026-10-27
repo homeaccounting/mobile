@@ -4,7 +4,7 @@ The HomeAccounting iOS and Android app, built with Expo and React Native. It tal
 
 ## Prerequisites
 
-- [Nix](https://nixos.org/). `nix develop` provides Node 22, pnpm 10, `just`, Watchman, CocoaPods, JDK 17 and the Android SDK (platforms 35 and 36, build tools, NDK, emulator and system images). The first run downloads several GB, mostly the Android SDK; later runs are fast.
+- [Nix](https://nixos.org/). `nix develop` provides Node 22, pnpm 10, `just`, Watchman, CocoaPods, JDK 17 and the Android SDK (platform 37, build tools, NDK, emulator and a system image). The first run downloads several GB, mostly the Android SDK; later runs are fast.
 - Xcode, for iOS only. It can't be packaged in a project shell, so install it system-wide (App Store); the maintainers' machines get it from their Nix system config. After installing or updating it, run `just ios-setup` (selects Xcode, accepts the licence, installs simulator components and the iOS runtime; safe to re-run).
 
 ### Installing the prerequisites from the command line

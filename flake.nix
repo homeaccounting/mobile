@@ -20,18 +20,19 @@
         inherit (pkgs) lib stdenv;
 
         # The SDK lives in the read-only store, so Gradle cannot download what is
-        # missing: list every version the build asks for. 35 is Expo's app-level
-        # default (expo-modules-autolinking ExpoRootProjectPlugin.kt); 36 is React
-        # Native's (react-native/gradle/libs.versions.toml, ReactAndroid's CMake).
-        # Bump together with the Expo SDK.
+        # missing: list every version the build asks for. Expo's app-level
+        # defaults (expo-modules-autolinking ExpoRootProjectPlugin.kt) and React
+        # Native's (react-native/gradle/libs.versions.toml, ReactAndroid's CMake)
+        # agree on compileSdk 37 / build-tools 37.0.0 as of Expo SDK 58; the 37
+        # platform also provides the emulator system image. Bump together with
+        # the Expo SDK.
         android = pkgs.androidenv.composeAndroidPackages {
-          platformVersions = [
-            "35"
-            "36"
-          ];
+          platformVersions = [ "37.0" ];
+          # 37.0.0 for Expo/React Native; 36.0.0 is AGP 9's default for modules
+          # that don't set buildToolsVersion (e.g. the `expo` module itself).
           buildToolsVersions = [
-            "35.0.0"
             "36.0.0"
+            "37.0.0"
           ];
           # Google re-published platform-tools r37.0.0 under the same URL, so the
           # pinned nixpkgs hash no longer matches. Only adb comes from here.
