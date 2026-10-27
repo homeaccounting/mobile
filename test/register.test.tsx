@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import type { ReactElement } from 'react';
 import { AuthProvider } from '@/auth/AuthProvider';
 import { createSessionStore } from '@/auth/session';
 import i18n from '@/i18n';
@@ -10,10 +11,9 @@ jest.mock(
   'expo-secure-store',
   () => jest.requireActual<typeof import('./secureStore')>('./secureStore').secureStoreMock,
 );
-jest.mock('expo-router', () => {
-  const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
-  return { Link: Text };
-});
+jest.mock('expo-router', () => ({
+  Link: ({ children }: { children: ReactElement }) => children,
+}));
 
 const t = (k: string) => i18n.t(k);
 

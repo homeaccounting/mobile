@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import type { ReactElement } from 'react';
 import { AuthProvider } from '@/auth/AuthProvider';
 import { createSessionStore } from '@/auth/session';
 import i18n from '@/i18n';
@@ -10,10 +11,9 @@ jest.mock(
   'expo-secure-store',
   () => jest.requireActual<typeof import('./secureStore')>('./secureStore').secureStoreMock,
 );
-jest.mock('expo-router', () => {
-  const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
-  return { Link: Text };
-});
+jest.mock('expo-router', () => ({
+  Link: ({ children }: { children: ReactElement }) => children,
+}));
 
 const t = (k: string) => i18n.t(k);
 
@@ -36,6 +36,16 @@ async function submit(email = 'a@b.io', password = 'secret') {
 }
 
 describe('SignIn', () => {
+  it('shows the remembered server that loads after mount', async () => {
+    resetSecureStore({ 'ha.serverUrl': 'http://192.168.1.10:8080' });
+    await render(
+      <AuthProvider store={createSessionStore()}>
+        <SignIn />
+      </AuthProvider>,
+    );
+    expect(await screen.findByText(/192\.168\.1\.10:8080/)).toBeTruthy();
+  });
+
   afterEach(() => jest.restoreAllMocks());
 
   it('shows invalid credentials', async () => {

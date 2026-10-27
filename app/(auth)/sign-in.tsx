@@ -23,7 +23,9 @@ export default function SignIn() {
   const auth = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [serverInput, setServerInput] = useState(auth.lastServerUrl ?? HOSTED_SERVER_URL);
+  // null until the user edits it, so a remembered server that loads after mount is still picked up.
+  const [serverEdit, setServerInput] = useState<string | null>(null);
+  const serverInput = serverEdit ?? auth.lastServerUrl ?? HOSTED_SERVER_URL;
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; server?: string }>({});
   const [banner, setBanner] = useState<string[]>([]);
@@ -113,8 +115,10 @@ export default function SignIn() {
         >
           <Text className="text-base font-semibold text-white">{t('auth.signIn')}</Text>
         </Pressable>
-        <Link href="/register" className="mt-4 text-center text-blue-600">
-          {t('auth.createAccount')}
+        <Link href="/register" asChild>
+          <Pressable accessibilityRole="link" className="mt-4 items-center">
+            <Text className="text-blue-600">{t('auth.createAccount')}</Text>
+          </Pressable>
         </Link>
         <ServerField value={serverInput} onChange={setServerInput} error={errors.server} />
       </ScrollView>
