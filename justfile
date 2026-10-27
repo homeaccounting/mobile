@@ -9,9 +9,10 @@ install:
     pnpm install
     @just lockfile-fix
 
-# Rewrite private-registry URLs in pnpm-lock.yaml to public npm (CI uses public npm)
+# Make pnpm-lock.yaml registry-neutral: drop explicit registry tarball URLs (pnpm
+# derives them from the configured registry: the org mirror locally, public npm in CI)
 lockfile-fix:
-    @sed -E -i.bak 's#https://npm\.dev\.wixpress\.com/(artifactory/)?api/npm/npm-repos/#https://registry.npmjs.org/#g' pnpm-lock.yaml
+    @sed -E -i.bak 's#https://npm\.dev\.wixpress\.com/(artifactory/)?api/npm/npm-repos/#https://registry.npmjs.org/#g; s#, tarball: https://registry\.npmjs\.org/[^}]*##' pnpm-lock.yaml
     @rm -f pnpm-lock.yaml.bak
     @if grep -q wixpress pnpm-lock.yaml; then echo "✗ Lockfile still references wixpress"; exit 1; else echo "✓ Lockfile points at public npm only"; fi
 
