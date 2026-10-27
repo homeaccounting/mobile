@@ -11,6 +11,17 @@ function makeClient(over: Partial<ConstructorParameters<typeof ApiClient>[0]> = 
 }
 
 describe('ApiClient', () => {
+  it('turns a body read failure into a NetworkError', async () => {
+    globalThis.fetch = jest.fn(() =>
+      Promise.resolve({
+        status: 200,
+        ok: true,
+        text: () => Promise.reject(new TypeError('stalled')),
+      } as Response),
+    ) as typeof fetch;
+    await expect(makeClient().get('/x')).rejects.toBeInstanceOf(NetworkError);
+  });
+
   it('attaches Authorization when a token is present', async () => {
     const seen = mockFetch(() => ({ status: 200, body: {} }));
     await makeClient({ getToken: () => 'jwt-abc' }).get('/api/users/me');

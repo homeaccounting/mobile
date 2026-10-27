@@ -15,6 +15,12 @@ export interface RequestOpts {
 
 const DEFAULT_TIMEOUT_MS = 15000;
 
+interface Sent {
+  status: number;
+  ok: boolean;
+  text: string;
+}
+
 export class NetworkError extends Error {
   constructor(cause?: unknown) {
     super('Network request failed');
@@ -64,7 +70,8 @@ export class ApiClient {
     return this.refreshing;
   }
 
-  private async send(path: string, init: RequestInit, token: string | null): Promise<Response> {
+  // The timeout covers the body read too, so a stalled or truncated body is a NetworkError.
+  private async send(path: string, init: RequestInit, token: string | null): Promise<Sent> {
     const headers = new Headers(init.headers ?? {});
     if (init.body) headers.set('Content-Type', 'application/json');
     if (token) headers.set('Authorization', `Bearer ${token}`);
@@ -72,11 +79,12 @@ export class ApiClient {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.opts.timeoutMs ?? DEFAULT_TIMEOUT_MS);
     try {
-      return await fetch(`${this.opts.getBaseUrl()}${path}`, {
+      const res = await fetch(`${this.opts.getBaseUrl()}${path}`, {
         ...init,
         headers,
         signal: controller.signal,
       });
+      return { status: res.status, ok: res.ok, text: await res.text() };
     } catch (e) {
       throw new NetworkError(e);
     } finally {
@@ -100,7 +108,7 @@ export class ApiClient {
     }
 
     if (!res.ok) {
-      const body = await safeReadErrorBody(res);
+      const body = safeParseErrorBody(res.text);
       throw new ApiError({
         status: res.status,
         message: body.message ?? `HTTP ${res.status}`,
@@ -111,23 +119,22 @@ export class ApiClient {
 
     // Servant's `Post '[JSON] NoContent` returns 200 with an empty body, not 204.
     if (res.status === 204) return undefined as T;
-    const text = await res.text();
-    if (!text) return undefined as T;
+    if (!res.text) return undefined as T;
     try {
-      return JSON.parse(text) as T;
+      return JSON.parse(res.text) as T;
     } catch {
       throw new ApiError({ status: res.status, message: 'Response is not JSON', code: 'NOT_JSON' });
     }
   }
 }
 
-async function safeReadErrorBody(res: Response): Promise<{
+function safeParseErrorBody(text: string): {
   message?: string;
   code?: string;
   fieldErrors?: Record<string, string>;
-}> {
+} {
   try {
-    const data = (await res.json()) as {
+    const data = JSON.parse(text) as {
       message?: string;
       code?: string;
       fieldErrors?: Record<string, string>;
