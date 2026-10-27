@@ -1,0 +1,5 @@
+{
+  "ios": {
+    "NSLocalNetworkUsageDescription": "HomeAccounting підключається до вашого власного сервера в локальній мережі."
+  }
+}
