@@ -1,1 +1,32 @@
-{ "home": { "title": "HomeAccounting", "tagline": "Your accounts, one prompt away" } }
+{
+  "home": {
+    "title": "HomeAccounting",
+    "tagline": "Your accounts, one prompt away",
+    "signOut": "Sign out"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "register": "Create account",
+    "createAccount": "Create an account",
+    "haveAccount": "Already have an account? Sign in",
+    "or": "or",
+    "server": "Server",
+    "change": "Change",
+    "serverPlaceholder": "https://your-server",
+    "localNetworkHint": "If iOS asked for Local Network access, allow it and try again."
+  },
+  "errors": {
+    "unreachable": "Can't reach this server. Check the address.",
+    "invalidCredentials": "Invalid email or password",
+    "emailTaken": "This email is already registered",
+    "notServer": "This doesn't look like a HomeAccounting server.",
+    "generic": "Something went wrong. Try again.",
+    "invalidServer": "Enter a valid server address",
+    "insecureServer": "Use https:// (http:// is only allowed on a local network)",
+    "invalidEmail": "Enter a valid email",
+    "passwordRequired": "Enter your password",
+    "passwordMin": "At least 8 characters"
+  }
+}

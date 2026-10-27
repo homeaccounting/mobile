@@ -1,1 +1,32 @@
-{ "home": { "title": "HomeAccounting", "tagline": "Ваші рахунки — за один запит" } }
+{
+  "home": {
+    "title": "HomeAccounting",
+    "tagline": "Ваші рахунки — за один запит",
+    "signOut": "Вийти"
+  },
+  "auth": {
+    "email": "Електронна пошта",
+    "password": "Пароль",
+    "signIn": "Увійти",
+    "register": "Створити акаунт",
+    "createAccount": "Створити акаунт",
+    "haveAccount": "Вже маєте акаунт? Увійдіть",
+    "or": "або",
+    "server": "Сервер",
+    "change": "Змінити",
+    "serverPlaceholder": "https://ваш-сервер",
+    "localNetworkHint": "Якщо iOS запитала доступ до локальної мережі, дозвольте його й спробуйте ще раз."
+  },
+  "errors": {
+    "unreachable": "Не вдається зʼєднатися з цим сервером. Перевірте адресу.",
+    "invalidCredentials": "Невірна електронна пошта або пароль",
+    "emailTaken": "Ця електронна пошта вже зареєстрована",
+    "notServer": "Це не схоже на сервер HomeAccounting.",
+    "generic": "Щось пішло не так. Спробуйте ще раз.",
+    "invalidServer": "Введіть коректну адресу сервера",
+    "insecureServer": "Використовуйте https:// (http:// дозволено лише в локальній мережі)",
+    "invalidEmail": "Введіть коректну електронну пошту",
+    "passwordRequired": "Введіть пароль",
+    "passwordMin": "Щонайменше 8 символів"
+  }
+}
