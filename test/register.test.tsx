@@ -3,7 +3,7 @@ import type { ReactElement } from 'react';
 import { AuthProvider } from '@/auth/AuthProvider';
 import { createSessionStore } from '@/auth/session';
 import i18n from '@/i18n';
-import Register from '../app/(auth)/register';
+import Register from '../app/register';
 import { mockFetch } from './fetch';
 import { resetSecureStore } from './secureStore';
 

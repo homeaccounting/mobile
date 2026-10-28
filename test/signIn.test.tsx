@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 import { AuthProvider } from '@/auth/AuthProvider';
 import { createSessionStore } from '@/auth/session';
 import i18n from '@/i18n';
-import SignIn from '../app/(auth)/sign-in';
+import SignIn from '../app/sign-in';
 import { mockFetch } from './fetch';
 import { resetSecureStore } from './secureStore';
 

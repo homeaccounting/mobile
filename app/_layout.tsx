@@ -19,8 +19,11 @@ function RootStack() {
       <Stack.Protected guard={status === 'signedIn'}>
         <Stack.Screen name="(app)" />
       </Stack.Protected>
+      {/* Top-level screens, not an (auth) group: signed out at "/", the router falls back to
+          the first allowed screen, and a group with no screen at "/" renders Unmatched Route. */}
       <Stack.Protected guard={status !== 'signedIn'}>
-        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="sign-in" />
+        <Stack.Screen name="register" />
       </Stack.Protected>
     </Stack>
   );
