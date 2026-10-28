@@ -7,10 +7,10 @@ import { promptApi } from './prompt';
 const client = new ApiClient({
   getBaseUrl: () => 'http://localhost:8080',
   getToken: () => 't',
-  onUnauthorized: () => {},
+  refreshSession: () => Promise.resolve(false),
 });
 
-const auth = { token: 'jwt', userId: 'u1', email: 'a@b.c', expiresIn: 3600 };
+const auth = { token: 'jwt', refreshToken: 'rt', userId: 'u1', email: 'a@b.c', expiresIn: 3600 };
 
 describe('authApi', () => {
   it('logs in with POST /api/auth/login', async () => {
@@ -25,6 +25,22 @@ describe('authApi', () => {
     await authApi(client).register({ email: 'a@b.c', password: 'pw' });
     expect(seen[0]?.url).toBe('http://localhost:8080/api/auth/register');
     expect(seen[0]?.method).toBe('POST');
+  });
+
+  it('refreshes with POST /api/auth/refresh and no Authorization', async () => {
+    const seen = mockFetch(() => ({ status: 200, body: auth }));
+    await authApi(client).refresh({ refreshToken: 'rt' });
+    expect(seen[0]?.url).toBe('http://localhost:8080/api/auth/refresh');
+    expect(JSON.parse(seen[0]?.body ?? '')).toEqual({ refreshToken: 'rt' });
+    expect(seen[0]?.headers.get('authorization')).toBeNull();
+  });
+
+  it('logs out with POST /api/auth/logout and no Authorization', async () => {
+    const seen = mockFetch(() => ({ status: 200 }));
+    await authApi(client).logout({ refreshToken: 'rt' });
+    expect(seen[0]?.url).toBe('http://localhost:8080/api/auth/logout');
+    expect(JSON.parse(seen[0]?.body ?? '')).toEqual({ refreshToken: 'rt' });
+    expect(seen[0]?.headers.get('authorization')).toBeNull();
   });
 });
 

@@ -10,7 +10,13 @@
     "ios": {
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.homeaccounting.app",
-      "supportsTablet": false
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true
+        },
+        "NSLocalNetworkUsageDescription": "HomeAccounting connects to your self-hosted server on your local network."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -33,11 +39,24 @@
         }
       ],
       "expo-localization",
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "locales": {
+      "en": "./src/i18n/native/en.json",
+      "uk": "./src/i18n/native/uk.json"
     }
   }
 }

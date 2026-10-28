@@ -12,6 +12,10 @@ export interface RegisterRequest {
   password: string;
 }
 
+export interface RefreshTokenRequest {
+  refreshToken: string;
+}
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -19,6 +23,8 @@ export interface LoginRequest {
 
 export interface AuthResponse {
   token: string;
+  // Opaque rotating refresh token; see backend AuthAPI.hs and ADR 007.
+  refreshToken: string;
   userId: UUID;
   email: string | null;
   expiresIn: number; // seconds
