@@ -1,9 +1,15 @@
 import { ApiError, NetworkError } from '@/api/client';
 
 export type AuthErrorKey =
-  'unreachable' | 'invalidCredentials' | 'emailTaken' | 'notServer' | 'generic';
+  | 'unreachable'
+  | 'invalidCredentials'
+  | 'emailTaken'
+  | 'notServer'
+  | 'providerRejected'
+  | 'providerUnavailable'
+  | 'generic';
 
-export function authErrorKey(err: unknown, op: 'login' | 'register'): AuthErrorKey {
+export function authErrorKey(err: unknown, op: 'login' | 'register' | 'oauth'): AuthErrorKey {
   if (err instanceof NetworkError) return 'unreachable';
   if (!(err instanceof ApiError)) return 'generic';
   if (err.code === 'NOT_JSON' || (err.status === 404 && !err.code)) return 'notServer';
@@ -24,5 +30,7 @@ export function authErrorKey(err: unknown, op: 'login' | 'register'): AuthErrorK
   ) {
     return 'emailTaken';
   }
+  if (op === 'oauth' && err.status === 401) return 'providerRejected';
+  if (op === 'oauth' && err.status === 503) return 'providerUnavailable';
   return 'generic';
 }

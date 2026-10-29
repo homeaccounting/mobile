@@ -30,6 +30,19 @@ export interface AuthResponse {
   expiresIn: number; // seconds
 }
 
+export type IdTokenProvider = 'google' | 'apple';
+
+export interface IdTokenSignInRequest {
+  idToken: string;
+  rawNonce: string;
+}
+
+export interface AuthProvidersResponse {
+  password: boolean;
+  google: boolean;
+  apple: boolean;
+}
+
 // --- Accounts ---
 // JSON shape from backend/src/Web/Types.hs:248-258 (`AccountResponse`).
 

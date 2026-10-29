@@ -15,12 +15,16 @@
     "server": "Сервер",
     "change": "Змінити",
     "serverPlaceholder": "https://ваш-сервер",
-    "localNetworkHint": "Якщо iOS запитала доступ до локальної мережі, дозвольте його й спробуйте ще раз."
+    "localNetworkHint": "Якщо iOS запитала доступ до локальної мережі, дозвольте його й спробуйте ще раз.",
+    "continueWithGoogle": "Продовжити з Google",
+    "continueWithApple": "Продовжити з Apple"
   },
   "errors": {
     "unreachable": "Не вдається зʼєднатися з цим сервером. Перевірте адресу.",
     "invalidCredentials": "Невірна електронна пошта або пароль",
     "emailTaken": "Ця електронна пошта вже зареєстрована",
+    "providerRejected": "Вхід відхилено. Спробуйте ще раз.",
+    "providerUnavailable": "Сервіс входу недоступний. Спробуйте пізніше.",
     "notServer": "Це не схоже на сервер HomeAccounting.",
     "generic": "Щось пішло не так. Спробуйте ще раз.",
     "invalidServer": "Введіть коректну адресу сервера",

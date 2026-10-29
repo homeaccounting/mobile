@@ -15,12 +15,16 @@
     "server": "Server",
     "change": "Change",
     "serverPlaceholder": "https://your-server",
-    "localNetworkHint": "If iOS asked for Local Network access, allow it and try again."
+    "localNetworkHint": "If iOS asked for Local Network access, allow it and try again.",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithApple": "Continue with Apple"
   },
   "errors": {
     "unreachable": "Can't reach this server. Check the address.",
     "invalidCredentials": "Invalid email or password",
     "emailTaken": "This email is already registered",
+    "providerRejected": "Sign-in was rejected. Try again.",
+    "providerUnavailable": "The sign-in provider is unavailable. Try again later.",
     "notServer": "This doesn't look like a HomeAccounting server.",
     "generic": "Something went wrong. Try again.",
     "invalidServer": "Enter a valid server address",
