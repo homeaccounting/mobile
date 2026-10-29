@@ -25,7 +25,9 @@ Local installs may go through the org npm mirror, so run `just install` (which m
 
 The app runs as a **dev build** (`just ios-run` / `just android-run`), not Expo Go. `ios/` and `android/` are generated and gitignored — change native config through `app.json` / config plugins only.
 
-**Local backend.** Use server `http://localhost:8080` on the iOS simulator and `http://10.0.2.2:8080` on the Android emulator; the backend needs `ID_TOKEN_SERVER_URLS=http://10.0.2.2:8080` for the latter. Start the emulator with `just android-emulator` before `just android-run`: it needs `-gpu swiftshader_indirect`, or Google's sign-in WebView crashes. Google sign-in also needs a Google account added in the emulator's Settings.
+**Android emulator.** Start it with `just android-emulator` before `just android-run`: it needs `-gpu swiftshader_indirect`, or Google's sign-in WebView crashes. Google sign-in also needs a Google account added in the emulator's Settings.
+
+**Local backend.** Use server `http://localhost:8080` on the iOS simulator and `http://10.0.2.2:8080` on the Android emulator; the backend needs `ID_TOKEN_SERVER_URLS=http://10.0.2.2:8080` for the latter.
 
 ## Common Commands
 
