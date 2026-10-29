@@ -41,8 +41,13 @@ android-emulator:
     if ! avdmanager list avd -c | grep -qx "$avd"; then
         image=$(ls -d "$ANDROID_HOME"/system-images/*/*/* | sort -V | tail -n1)
         echo no | avdmanager create avd --force -n "$avd" -k "$(echo "${image#"$ANDROID_HOME"/}" | tr / ';')"
+        # avdmanager disables the host keyboard.
+        sed -i.bak 's/^hw.keyboard=.*/hw.keyboard=yes/' "$HOME/.android/avd/$avd.avd/config.ini"
+        rm -f "$HOME/.android/avd/$avd.avd/config.ini.bak"
     fi
-    emulator -avd "$avd"
+    # Host rendering gives the WebView behind Google's sign-in no OpenGL ES and it crashes
+    # (Chrome needs ANGLE); SwiftShader provides ANGLE. hw.gpu.mode in config.ini is not honoured.
+    emulator -avd "$avd" -gpu swiftshader_indirect
 
 typecheck:
     pnpm exec tsc --noEmit

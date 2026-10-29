@@ -25,6 +25,8 @@ Local installs may go through the org npm mirror, so run `just install` (which m
 
 The app runs as a **dev build** (`just ios-run` / `just android-run`), not Expo Go. `ios/` and `android/` are generated and gitignored — change native config through `app.json` / config plugins only.
 
+Start the Android emulator with `just android-emulator` before `just android-run`. The recipe launches it with `-gpu swiftshader_indirect`: with host rendering, the WebView behind Google's sign-in crashes (Chrome needs ANGLE), and `expo run:android` starts an emulator without that flag. To test Google sign-in, add a Google account in the emulator's Settings first.
+
 ## Common Commands
 
 All commands use `just` (task runner). Run `just --list` to see all recipes.
