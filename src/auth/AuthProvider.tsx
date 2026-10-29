@@ -10,7 +10,10 @@ import {
 import { authApi } from '@/api/auth';
 import { queryClient } from '@/lib/queryClient';
 import { ApiError } from '@/api/client';
+import type { IdTokenProvider } from '@/api/types';
 import { assertTokenPair, createUnauthenticatedClient } from './api';
+import { bindNonce, newRawNonce } from './nonce';
+import { nativeSignIn } from './providers';
 import { parseServerUrl } from './serverUrl';
 import { sessionStore, type SessionStore } from './session';
 
@@ -21,6 +24,10 @@ interface AuthContextValue {
   lastServerUrl: string | null;
   signIn(i: AuthInput): Promise<void>;
   register(i: AuthInput): Promise<void>;
+  signInWithProvider(
+    provider: IdTokenProvider,
+    serverUrl: string,
+  ): Promise<'signedIn' | 'cancelled'>;
   signOut(): Promise<void>;
 }
 
@@ -57,28 +64,46 @@ export function AuthProvider({
   }, [store]);
 
   const value = useMemo<AuthContextValue>(() => {
-    const start = async (op: 'login' | 'register', i: AuthInput) => {
-      const server = parseServerUrl(i.serverUrl);
+    const requireServer = (input: string) => {
+      const server = parseServerUrl(input);
       if (!server.ok)
         throw new ApiError({ status: 0, code: 'INVALID_SERVER', message: 'Invalid server URL' });
-      const api = authApi(createUnauthenticatedClient(server.url));
-      const res = assertTokenPair(
+      return server.url;
+    };
+    const save = (serverUrl: string, res: Parameters<typeof assertTokenPair>[0]) => {
+      const pair = assertTokenPair(res);
+      return store.set({ serverUrl, accessToken: pair.token, refreshToken: pair.refreshToken });
+    };
+    const start = async (op: 'login' | 'register', i: AuthInput) => {
+      const serverUrl = requireServer(i.serverUrl);
+      const api = authApi(createUnauthenticatedClient(serverUrl));
+      await save(
+        serverUrl,
         await (op === 'login' ? api.login : api.register)({
           email: i.email.trim(),
           password: i.password,
         }),
       );
-      await store.set({
-        serverUrl: server.url,
-        accessToken: res.token,
-        refreshToken: res.refreshToken,
-      });
     };
     return {
       status,
       lastServerUrl: store.lastServerUrl(),
       signIn: (i) => start('login', i),
       register: (i) => start('register', i),
+      async signInWithProvider(provider, input) {
+        const serverUrl = requireServer(input);
+        const rawNonce = newRawNonce();
+        const result = await nativeSignIn(provider, bindNonce(serverUrl, rawNonce));
+        if (result.type === 'cancelled') return 'cancelled';
+        await save(
+          serverUrl,
+          await authApi(createUnauthenticatedClient(serverUrl)).idTokenSignIn(provider, {
+            idToken: result.idToken,
+            rawNonce,
+          }),
+        );
+        return 'signedIn';
+      },
       async signOut() {
         const current = store.getSnapshot();
         await store.clear();
