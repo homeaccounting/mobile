@@ -1,4 +1,5 @@
 import * as Apple from 'expo-apple-authentication';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { signIn as googleSignIn } from '../../modules/google-id-token';
 import { isAppleSignInAvailable, nativeSignIn } from './providers';
@@ -8,6 +9,11 @@ jest.mock('expo-apple-authentication', () => ({
   signInAsync: jest.fn(),
   isAvailableAsync: jest.fn(),
   AppleAuthenticationScope: { FULL_NAME: 0, EMAIL: 1 },
+}));
+
+jest.mock('expo-constants', () => ({
+  __esModule: true,
+  default: { expoConfig: { ios: { usesAppleSignIn: true } } },
 }));
 
 const google = jest.mocked(googleSignIn);
@@ -51,6 +57,13 @@ describe('nativeSignIn', () => {
 describe('isAppleSignInAvailable', () => {
   it('is false off iOS without asking the OS', async () => {
     jest.replaceProperty(Platform, 'OS', 'android');
+    await expect(isAppleSignInAvailable()).resolves.toBe(false);
+    expect(apple.isAvailableAsync).not.toHaveBeenCalled();
+  });
+
+  it('is false on iOS without asking the OS when the switch is off', async () => {
+    jest.replaceProperty(Platform, 'OS', 'ios');
+    jest.replaceProperty(Constants, 'expoConfig', { ios: { usesAppleSignIn: false } } as never);
     await expect(isAppleSignInAvailable()).resolves.toBe(false);
     expect(apple.isAvailableAsync).not.toHaveBeenCalled();
   });

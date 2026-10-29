@@ -1,4 +1,5 @@
 import * as Apple from 'expo-apple-authentication';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import type { IdTokenProvider } from '@/api/types';
 import { signIn as googleSignIn } from '../../modules/google-id-token';
@@ -25,5 +26,6 @@ export async function nativeSignIn(
 }
 
 export function isAppleSignInAvailable(): Promise<boolean> {
+  if (Constants.expoConfig?.ios?.usesAppleSignIn !== true) return Promise.resolve(false);
   return Platform.OS === 'ios' ? Apple.isAvailableAsync() : Promise.resolve(false);
 }

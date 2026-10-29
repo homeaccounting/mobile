@@ -11,6 +11,7 @@
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.homeaccounting.app",
       "supportsTablet": false,
+      "usesAppleSignIn": false,
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsLocalNetworking": true
@@ -48,6 +49,7 @@
           "webClientId": "624843376934-ka36ohra7e5l4oaj82dua6417jq1j2n1.apps.googleusercontent.com"
         }
       ],
+      "./plugins/with-apple-sign-in-switch.js",
       "expo-apple-authentication",
       [
         "expo-build-properties",
