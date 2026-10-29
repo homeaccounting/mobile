@@ -21,7 +21,7 @@ The one thing a project shell cannot provide is **Xcode** (licence-bound, not in
 
 Local installs may go through the org npm mirror, so run `just install` (which makes the lockfile registry-neutral: no explicit tarball URLs, so pnpm fetches from whichever registry is configured — the mirror locally, public npm in CI) rather than bare `pnpm install`, and never commit a mirror `.npmrc`. The committed `pnpm-lock.yaml` must not contain `wixpress` or `tarball:` URLs.
 
-**Upgrading the Expo SDK through the mirror.** The mirror delays packages by about two weeks, while Expo's live version API always points at the newest patch, so plain `expo install --fix` asks for versions the mirror doesn't have yet. Instead: `pnpm exec expo install expo@^<sdk>.0.0`, then `EXPO_OFFLINE=1 pnpm exec expo install --fix` (offline mode aligns every Expo-managed package to the _installed_ `expo`'s `bundledNativeModules.json`). Then check for stale peers pnpm auto-installed for the old SDK (`react-native-gesture-handler`, `@expo/dom-webview`, `@react-native/jest-preset`, `jest`): `jest-expo`'s and `expo`'s `peerDependencies` name the expected ranges. Online `expo-doctor` will flag patch versions newer than the mirror; that's the mirror lag, not a problem.
+**Upgrading the Expo SDK through the mirror.** The mirror delays packages by about two weeks, while Expo's live version API always points at the newest patch, so plain `expo install --fix` asks for versions the mirror doesn't have yet. Instead: `pnpm exec expo install expo@^<sdk>.0.0`, then `EXPO_OFFLINE=1 pnpm exec expo install --fix` (offline mode aligns every Expo-managed package to the _installed_ `expo`'s `bundledNativeModules.json`). Then check for stale peers pnpm auto-installed for the old SDK (`react-native-gesture-handler`, `@expo/dom-webview`, `@react-native/jest-preset`, `jest`): `jest-expo`'s and `expo`'s `peerDependencies` name the expected ranges. Online `expo-doctor` will flag patch versions newer than the mirror; that's the mirror lag, not a problem. `package.json`'s `jest.transformIgnorePatterns` is jest-expo's default plus `@noble`; re-copy it from `node_modules/jest-expo/jest-preset.js` on an SDK bump.
 
 The app runs as a **dev build** (`just ios-run` / `just android-run`), not Expo Go. `ios/` and `android/` are generated and gitignored — change native config through `app.json` / config plugins only.
 
@@ -58,7 +58,7 @@ modules/   # Local Expo native modules (autolinked); google-id-token wraps the G
 plugins/   # Local config plugins (Sign in with Apple switch)
 src/
 ├── api/   # Typed HTTP client, ported from web and trimmed to the MVP
-├── auth/  # Sign-in: serverUrl, session, api, errors, AuthProvider
+├── auth/  # Sign-in: serverUrl, session, api, errors, AuthProvider, nonce, providers, SignInProviders
 ├── i18n/  # i18next setup; strings in locales/{en,uk}.json
 └── lib/   # Utilities (queryClient, …)
 test/      # Tests for routes and shared test helpers (fetch.ts)
@@ -76,6 +76,7 @@ test/      # Tests for routes and shared test helpers (fetch.ts)
 - Tests mock `expo-secure-store` via `test/secureStore.ts`.
 - Google and Apple sign-in send the provider ID token with a server-bound nonce (`src/auth/nonce.ts`). The format is owned by the backend (its ID-token spec §3.2): change both sides together, and keep the known-answer tests in `nonce.test.ts` equal to the backend's.
 - `modules/google-id-token` is our own Expo module because the free Google sign-in library cannot pass a nonce. Its client IDs are config-plugin props in `app.json` (public values). Native changes there are verified only by a prebuild plus `just ios-run` / `just android-run` and a manual sign-in; Jest mocks the module.
+- Every backend the app signs in to must list the official web and iOS Google client IDs in `GOOGLE_ID_TOKEN_AUDIENCES` (the backend default does). The Android OAuth client is registered with the debug-keystore SHA-1, so release builds need their SHA-1 added.
 - The sign-in screens show a provider's button only when `GET /api/auth/providers` on the chosen server enables it.
 - Sign in with Apple is off until the paid Apple Developer account exists. To turn it on, set `ios.usesAppleSignIn: true` in `app.json`: that restores the `com.apple.developer.applesignin` entitlement and shows the Apple button. Keep `plugins/with-apple-sign-in-switch.js` listed before `expo-apple-authentication`, since config mods run in reverse registration order.
 
