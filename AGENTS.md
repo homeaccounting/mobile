@@ -54,6 +54,8 @@ just clean              # remove node_modules/.expo/ios/android/coverage
 
 ```
 app/       # Expo Router routes only (_layout.tsx, index.tsx, …)
+modules/   # Local Expo native modules (autolinked); google-id-token wraps the Google SDKs
+plugins/   # Local config plugins (Sign in with Apple switch)
 src/
 ├── api/   # Typed HTTP client, ported from web and trimmed to the MVP
 ├── auth/  # Sign-in: serverUrl, session, api, errors, AuthProvider
@@ -72,6 +74,10 @@ test/      # Tests for routes and shared test helpers (fetch.ts)
 - A crash between refresh-token rotation and the keystore write signs the user out on next launch (ADR 007 reuse rule).
 - `.expo/types` is generated; restart Metro after adding routes.
 - Tests mock `expo-secure-store` via `test/secureStore.ts`.
+- Google and Apple sign-in send the provider ID token with a server-bound nonce (`src/auth/nonce.ts`). The format is owned by the backend (its ID-token spec §3.2): change both sides together, and keep the known-answer tests in `nonce.test.ts` equal to the backend's.
+- `modules/google-id-token` is our own Expo module because the free Google sign-in library cannot pass a nonce. Its client IDs are config-plugin props in `app.json` (public values). Native changes there are verified only by a prebuild plus `just ios-run` / `just android-run` and a manual sign-in; Jest mocks the module.
+- The sign-in screens show a provider's button only when `GET /api/auth/providers` on the chosen server enables it.
+- Sign in with Apple is off until the paid Apple Developer account exists. To turn it on, set `ios.usesAppleSignIn: true` in `app.json`: that restores the `com.apple.developer.applesignin` entitlement and shows the Apple button. Keep `plugins/with-apple-sign-in-switch.js` listed before `expo-apple-authentication`, since config mods run in reverse registration order.
 
 ## Testing
 
