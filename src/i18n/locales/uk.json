@@ -16,8 +16,7 @@
     "change": "Змінити",
     "serverPlaceholder": "https://ваш-сервер",
     "localNetworkHint": "Якщо iOS запитала доступ до локальної мережі, дозвольте його й спробуйте ще раз.",
-    "continueWithGoogle": "Продовжити з Google",
-    "continueWithApple": "Продовжити з Apple"
+    "continueWithGoogle": "Продовжити з Google"
   },
   "errors": {
     "unreachable": "Не вдається зʼєднатися з цим сервером. Перевірте адресу.",

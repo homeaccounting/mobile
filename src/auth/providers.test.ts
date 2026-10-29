@@ -19,7 +19,10 @@ jest.mock('expo-constants', () => ({
 const google = jest.mocked(googleSignIn);
 const apple = jest.mocked(Apple);
 
-afterEach(() => jest.restoreAllMocks());
+afterEach(() => {
+  jest.restoreAllMocks();
+  jest.clearAllMocks();
+});
 
 describe('nativeSignIn', () => {
   it('passes the nonce to Google and returns its result', async () => {

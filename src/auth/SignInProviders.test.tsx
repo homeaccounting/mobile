@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import { ApiError } from '@/api/client';
+import { Platform } from 'react-native';
+import { ApiError, NetworkError } from '@/api/client';
 import i18n from '@/i18n';
 import { mockFetch } from '../../test/fetch';
 import { useAuth } from './AuthProvider';
@@ -28,6 +29,8 @@ jest
   .mocked(useAuth)
   .mockReturnValue({ signInWithProvider } as unknown as ReturnType<typeof useAuth>);
 
+const googleOnly = { status: 200, body: { password: true, google: true, apple: false } };
+
 async function renderButtons(
   providers: { status: number; body?: unknown } | { reject: Error },
   apple = true,
@@ -37,23 +40,31 @@ async function renderButtons(
   const seen = mockFetch(() => providers);
   const onBusy = jest.fn();
   const onError = jest.fn();
-  await render(
-    <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })}
-    >
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+  });
+  const ui = (extra: Partial<Parameters<typeof SignInProviders>[0]> = {}) => (
+    <QueryClientProvider client={client}>
       <SignInProviders
         serverInput="https://h"
         disabled={false}
         onBusy={onBusy}
         onError={onError}
         {...props}
+        {...extra}
       />
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
-  return { seen, onBusy, onError };
+  const view = await render(ui());
+  const rerender = (extra: Partial<Parameters<typeof SignInProviders>[0]>) =>
+    view.rerender(ui(extra));
+  return { seen, onBusy, onError, rerender };
 }
 
-afterEach(() => signInWithProvider.mockReset());
+afterEach(() => {
+  signInWithProvider.mockReset();
+  jest.restoreAllMocks();
+});
 
 describe('SignInProviders', () => {
   it('shows the providers the server enables, with the divider', async () => {
@@ -154,5 +165,40 @@ describe('SignInProviders', () => {
       await screen.findByRole('button', { name: t('auth.continueWithGoogle') }),
     );
     expect(signInWithProvider).not.toHaveBeenCalled();
+  });
+
+  it('signs in to the server the buttons were shown for, not the live input', async () => {
+    signInWithProvider.mockResolvedValue('cancelled');
+    const { rerender } = await renderButtons(googleOnly);
+    const button = await screen.findByRole('button', { name: t('auth.continueWithGoogle') });
+    await rerender({ serverInput: 'https://other' });
+    await fireEvent.press(button);
+    expect(signInWithProvider).toHaveBeenCalledWith('google', 'https://h');
+  });
+
+  it('starts one native sheet for two quick taps', async () => {
+    signInWithProvider.mockReturnValue(new Promise(() => {}));
+    await renderButtons(googleOnly);
+    const button = await screen.findByRole('button', { name: t('auth.continueWithGoogle') });
+    await fireEvent.press(button);
+    await fireEvent.press(button);
+    expect(signInWithProvider).toHaveBeenCalledTimes(1);
+  });
+
+  it('adds the local network hint for an unreachable http server on iOS', async () => {
+    jest.replaceProperty(Platform, 'OS', 'ios');
+    signInWithProvider.mockRejectedValue(new NetworkError());
+    const { onError } = await renderButtons(googleOnly, true, {
+      serverInput: 'http://192.168.1.5:8080',
+    });
+    await fireEvent.press(
+      await screen.findByRole('button', { name: t('auth.continueWithGoogle') }),
+    );
+    await waitFor(() =>
+      expect(onError).toHaveBeenLastCalledWith([
+        t('errors.unreachable'),
+        t('auth.localNetworkHint'),
+      ]),
+    );
   });
 });

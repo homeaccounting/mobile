@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import * as Apple from 'expo-apple-authentication';
-import { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Platform, Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { authApi } from '@/api/auth';
 import type { IdTokenProvider } from '@/api/types';
@@ -33,6 +33,7 @@ export function SignInProviders({ serverInput, disabled, onBusy, onError }: Prop
   const auth = useAuth();
   const parsed = parseServerUrl(useDebounced(serverInput, 400));
   const serverUrl = parsed.ok ? parsed.url : null;
+  const inFlight = useRef(false);
   // An older server without the endpoint, or an unreachable one, just shows no buttons.
   const { data: enabled } = useQuery({
     queryKey: ['authProviders', serverUrl],
@@ -51,16 +52,23 @@ export function SignInProviders({ serverInput, disabled, onBusy, onError }: Prop
   const apple = enabled?.apple === true && appleAvailable === true;
   if (!serverUrl || (!google && !apple)) return null;
 
-  async function start(provider: IdTokenProvider) {
-    if (disabled) return;
+  async function start(provider: IdTokenProvider, url: string) {
+    if (disabled || inFlight.current) return;
+    inFlight.current = true;
     onError([]);
     onBusy(true);
     try {
       // On success the guarded stack swaps this screen out, so busy stays set.
-      if ((await auth.signInWithProvider(provider, serverInput)) === 'signedIn') return;
+      if ((await auth.signInWithProvider(provider, url)) === 'signedIn') return;
     } catch (e) {
-      onError([t(`errors.${authErrorKey(e, 'oauth')}`)]);
+      const key = authErrorKey(e, 'oauth');
+      const messages = [t(`errors.${key}`)];
+      // http is only ever accepted for private hosts (see parseServerUrl).
+      if (key === 'unreachable' && Platform.OS === 'ios' && new URL(url).protocol === 'http:')
+        messages.push(t('auth.localNetworkHint'));
+      onError(messages);
     }
+    inFlight.current = false;
     onBusy(false);
   }
 
@@ -70,7 +78,7 @@ export function SignInProviders({ serverInput, disabled, onBusy, onError }: Prop
         <Pressable
           accessibilityRole="button"
           disabled={disabled}
-          onPress={() => void start('google')}
+          onPress={() => void start('google', serverUrl)}
           className="items-center rounded-lg border border-gray-300 py-3"
         >
           <Text className="text-base font-semibold text-gray-800">
@@ -83,7 +91,7 @@ export function SignInProviders({ serverInput, disabled, onBusy, onError }: Prop
           buttonType={Apple.AppleAuthenticationButtonType.CONTINUE}
           buttonStyle={Apple.AppleAuthenticationButtonStyle.BLACK}
           cornerRadius={8}
-          onPress={() => void start('apple')}
+          onPress={() => void start('apple', serverUrl)}
           style={{ height: 48, marginTop: google ? 12 : 0 }}
         />
       ) : null}
