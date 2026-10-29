@@ -48,6 +48,7 @@
           "webClientId": "624843376934-ka36ohra7e5l4oaj82dua6417jq1j2n1.apps.googleusercontent.com"
         }
       ],
+      "expo-apple-authentication",
       [
         "expo-build-properties",
         {
