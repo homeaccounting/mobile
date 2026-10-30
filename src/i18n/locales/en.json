@@ -2,7 +2,24 @@
   "home": {
     "title": "HomeAccounting",
     "tagline": "Your accounts, one prompt away",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "settings": "Settings",
+    "close": "Close",
+    "server": "Server",
+    "language": "Language",
+    "noAccounts": "Create your first account on the web",
+    "openWeb": "Open the web app",
+    "accountsError": "Couldn't load your accounts.",
+    "retry": "Retry",
+    "promptLabel": "What did you spend or earn?",
+    "promptPlaceholder": "e.g. coffee 4.50, taxi 12",
+    "send": "Send",
+    "dismiss": "Dismiss",
+    "failedEntry": "Not recorded: {{reason}}",
+    "promptUpstream": "Couldn't process that. Try again or rephrase.",
+    "captureDisabled": "Capture isn't enabled on this server.",
+    "captureDisabledHint": "The server admin can turn it on by setting LLM_API_KEY.",
+    "selfHostDocs": "Self-hosting guide"
   },
   "auth": {
     "email": "Email",
@@ -31,5 +48,9 @@
     "invalidEmail": "Enter a valid email",
     "passwordRequired": "Enter your password",
     "passwordMin": "At least 8 characters"
+  },
+  "languages": {
+    "en": "English",
+    "uk": "Українська"
   }
 }
