@@ -24,4 +24,11 @@ describe('authErrorKey', () => {
     expect(authErrorKey(api(400, 'ACCOUNT_ERROR'), 'register')).toBe('generic');
     expect(authErrorKey(new Error('boom'), 'register')).toBe('generic');
   });
+  it('maps ID-token sign-in failures', () => {
+    expect(authErrorKey(api(401, 'UNAUTHENTICATED'), 'oauth')).toBe('providerRejected');
+    expect(authErrorKey(api(503), 'oauth')).toBe('providerUnavailable');
+    expect(authErrorKey(api(400, 'ACCOUNT_ERROR'), 'oauth')).toBe('generic');
+    expect(authErrorKey(new NetworkError(), 'oauth')).toBe('unreachable');
+    expect(authErrorKey(api(401), 'login')).toBe('generic');
+  });
 });

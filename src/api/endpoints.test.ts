@@ -42,6 +42,25 @@ describe('authApi', () => {
     expect(JSON.parse(seen[0]?.body ?? '')).toEqual({ refreshToken: 'rt' });
     expect(seen[0]?.headers.get('authorization')).toBeNull();
   });
+
+  it('signs in with an ID token via POST /api/auth/oauth/:provider/id-token', async () => {
+    const seen = mockFetch(() => ({ status: 200, body: auth }));
+    await expect(
+      authApi(client).idTokenSignIn('apple', { idToken: 'jwt', rawNonce: 'raw' }),
+    ).resolves.toEqual(auth);
+    expect(seen[0]?.url).toBe('http://localhost:8080/api/auth/oauth/apple/id-token');
+    expect(JSON.parse(seen[0]?.body ?? '')).toEqual({ idToken: 'jwt', rawNonce: 'raw' });
+    expect(seen[0]?.headers.get('authorization')).toBeNull();
+  });
+
+  it('lists providers with GET /api/auth/providers', async () => {
+    const body = { password: true, google: true, apple: false };
+    const seen = mockFetch(() => ({ status: 200, body }));
+    await expect(authApi(client).providers()).resolves.toEqual(body);
+    expect(seen[0]?.url).toBe('http://localhost:8080/api/auth/providers');
+    expect(seen[0]?.method).toBe('GET');
+    expect(seen[0]?.headers.get('authorization')).toBeNull();
+  });
 });
 
 describe('accountsApi', () => {

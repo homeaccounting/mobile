@@ -11,6 +11,7 @@
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.homeaccounting.app",
       "supportsTablet": false,
+      "usesAppleSignIn": false,
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsLocalNetworking": true
@@ -42,10 +43,25 @@
       "expo-status-bar",
       "expo-secure-store",
       [
+        "./modules/google-id-token/app.plugin.js",
+        {
+          "iosClientId": "441898724340-p6uqk6e2um1afkgiliddr3c6ncrq7v6f.apps.googleusercontent.com",
+          "webClientId": "441898724340-fhja46snuelu6fdu58supust0md60egu.apps.googleusercontent.com"
+        }
+      ],
+      "./plugins/with-apple-sign-in-switch.js",
+      "expo-apple-authentication",
+      [
         "expo-build-properties",
         {
           "android": {
             "usesCleartextTraffic": true
+          },
+          "ios": {
+            "extraPods": [
+              { "name": "GoogleUtilities", "modular_headers": true },
+              { "name": "RecaptchaInterop", "modular_headers": true }
+            ]
           }
         }
       ]

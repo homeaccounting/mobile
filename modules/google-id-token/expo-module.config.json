@@ -1,0 +1,10 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["GoogleIdTokenModule"],
+    "appDelegateSubscribers": ["GoogleIdTokenAppDelegate"]
+  },
+  "android": {
+    "modules": ["expo.modules.googleidtoken.GoogleIdTokenModule"]
+  }
+}

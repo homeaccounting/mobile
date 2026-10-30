@@ -8,6 +8,7 @@ import Register from '../app/register';
 import SignIn from '../app/sign-in';
 import { resetSecureStore } from './secureStore';
 
+jest.mock('@/auth/SignInProviders', () => ({ SignInProviders: () => null }));
 jest.mock('../global.css', () => ({}));
 jest.mock(
   'expo-secure-store',

@@ -14,7 +14,7 @@ import { useAuth } from '@/auth/AuthProvider';
 import { authErrorKey } from '@/auth/errors';
 import { ServerField } from '@/auth/ServerField';
 import { HOSTED_SERVER_URL, parseServerUrl } from '@/auth/serverUrl';
-import { hasSignInProviders, SignInProviders } from '@/auth/SignInProviders';
+import { SignInProviders } from '@/auth/SignInProviders';
 
 const schema = z.object({ email: z.email(), password: z.string().min(1) });
 
@@ -80,10 +80,15 @@ export default function SignIn() {
         contentContainerClassName="flex-grow justify-center p-6"
         keyboardShouldPersistTaps="handled"
       >
-        <SignInProviders />
-        {hasSignInProviders ? (
-          <Text className="my-4 text-center text-gray-500">{t('auth.or')}</Text>
-        ) : null}
+        <SignInProviders
+          serverInput={serverInput}
+          disabled={submitting}
+          onBusy={(busy) => {
+            inFlight.current = busy;
+            setSubmitting(busy);
+          }}
+          onError={setBanner}
+        />
         <TextInput
           value={email}
           onChangeText={setEmail}

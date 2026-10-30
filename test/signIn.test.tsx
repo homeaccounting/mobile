@@ -8,6 +8,7 @@ import SignIn from '../app/sign-in';
 import { mockFetch } from './fetch';
 import { resetSecureStore } from './secureStore';
 
+jest.mock('@/auth/SignInProviders', () => ({ SignInProviders: () => null }));
 jest.mock(
   'expo-secure-store',
   () => jest.requireActual<typeof import('./secureStore')>('./secureStore').secureStoreMock,

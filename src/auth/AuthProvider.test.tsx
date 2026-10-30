@@ -5,6 +5,7 @@ import { resetSecureStore } from '../../test/secureStore';
 import { queryClient } from '@/lib/queryClient';
 import { createSessionStore } from './session';
 import { AuthProvider, useAuth } from './AuthProvider';
+import { nativeSignIn } from './providers';
 
 jest.mock(
   'expo-secure-store',
@@ -12,6 +13,13 @@ jest.mock(
     jest.requireActual<typeof import('../../test/secureStore')>('../../test/secureStore')
       .secureStoreMock,
 );
+
+jest.mock('./providers', () => ({ nativeSignIn: jest.fn() }));
+jest.mock('./nonce', () => ({
+  newRawNonce: () => 'raw-nonce-0123456789',
+  bindNonce: (url: string, raw: string) => `bound(${url}|${raw})`,
+}));
+const native = jest.mocked(nativeSignIn);
 
 const pair = { token: 'a', refreshToken: 'r', userId: 'u', email: 'e@x.io', expiresIn: 3600 };
 const stored = { 'ha.serverUrl': 'https://h', 'ha.accessToken': 'a', 'ha.refreshToken': 'r' };
@@ -31,6 +39,7 @@ describe('AuthProvider', () => {
   afterEach(() => {
     jest.useRealTimers();
     jest.restoreAllMocks();
+    native.mockReset();
   });
 
   it('starts signed out with an empty keystore', async () => {
@@ -130,5 +139,63 @@ describe('AuthProvider', () => {
     expect(hook.result.current.status).toBe('signedOut');
     expect(store.lastServerUrl()).toBe('https://h');
     expect(clear).toHaveBeenCalled();
+  });
+
+  describe('signInWithProvider', () => {
+    it('signs in with the bound nonce and sends the raw one', async () => {
+      const { store, hook } = await setup();
+      native.mockResolvedValue({ type: 'success', idToken: 'idt' });
+      const seen = mockFetch(() => ({ status: 200, body: pair }));
+      let outcome: unknown;
+      await act(async () => {
+        outcome = await hook.result.current.signInWithProvider('google', 'HTTPS://H/');
+      });
+      expect(outcome).toBe('signedIn');
+      expect(native).toHaveBeenCalledWith('google', 'bound(https://h|raw-nonce-0123456789)');
+      expect(seen[0]?.url).toBe('https://h/api/auth/oauth/google/id-token');
+      expect(JSON.parse(seen[0]?.body ?? '')).toEqual({
+        idToken: 'idt',
+        rawNonce: 'raw-nonce-0123456789',
+      });
+      expect(store.getSnapshot()).toEqual({
+        serverUrl: 'https://h',
+        accessToken: 'a',
+        refreshToken: 'r',
+      });
+    });
+
+    it('does nothing when the user cancels', async () => {
+      const { store, hook } = await setup();
+      native.mockResolvedValue({ type: 'cancelled' });
+      const seen = mockFetch(() => ({ status: 200, body: pair }));
+      let outcome: unknown;
+      await act(async () => {
+        outcome = await hook.result.current.signInWithProvider('apple', 'https://h');
+      });
+      expect(outcome).toBe('cancelled');
+      expect(seen).toHaveLength(0);
+      expect(store.getSnapshot()).toBeNull();
+    });
+
+    it('rejects an invalid server before the native sheet', async () => {
+      const { hook } = await setup();
+      await expect(
+        hook.result.current.signInWithProvider('google', 'http://example.com'),
+      ).rejects.toMatchObject({ code: 'INVALID_SERVER' });
+      expect(native).not.toHaveBeenCalled();
+    });
+
+    it('surfaces a rejected token and keeps the user signed out', async () => {
+      const { store, hook } = await setup();
+      native.mockResolvedValue({ type: 'success', idToken: 'idt' });
+      mockFetch(() => ({
+        status: 401,
+        body: { code: 'UNAUTHENTICATED', message: 'Invalid ID token' },
+      }));
+      await expect(
+        hook.result.current.signInWithProvider('google', 'https://h'),
+      ).rejects.toMatchObject({ status: 401 });
+      expect(store.getSnapshot()).toBeNull();
+    });
   });
 });
