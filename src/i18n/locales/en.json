@@ -64,6 +64,15 @@
     "group": {
       "other": "Other",
       "sharedWithMe": "Shared with me"
+    },
+    "assetType": {
+      "property": "Property",
+      "vehicle": "Vehicle",
+      "stocks": "Stocks",
+      "retirementFund": "Retirement fund",
+      "electronics": "Electronics",
+      "equipment": "Equipment",
+      "furniture": "Furniture"
     }
   }
 }

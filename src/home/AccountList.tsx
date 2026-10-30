@@ -1,14 +1,81 @@
 import { useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, SectionList, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import type { AccountResponse } from '@/api/types';
 import { useAuth } from '@/auth/AuthProvider';
 import { formatMoney } from '@/lib/format';
-import { buildAccountGroups } from './accountGroups';
+import { buildAccountGroups, type AccountGroup } from './accountGroups';
 import { accountLabelParts } from './accountLabel';
 import { useAccounts } from './useAccounts';
 
+// `siblings` is null inside a sub-group, whose header already names the institution.
+type Row =
+  | { type: 'account'; account: AccountResponse; siblings: AccountResponse[] | null }
+  | { type: 'subgroup'; group: AccountGroup };
+
+function GroupHeader({
+  label,
+  collapsed,
+  nested,
+  onToggle,
+}: {
+  label: string;
+  collapsed: boolean;
+  nested?: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ expanded: !collapsed }}
+      onPress={onToggle}
+      className={`flex-row items-center ${nested ? 'pb-1 pl-4 pt-3' : 'pb-1 pt-4'}`}
+    >
+      <Text className="w-4 text-sm text-gray-500">{collapsed ? '▸' : '▾'}</Text>
+      <Text
+        className={
+          nested ? 'text-sm text-gray-600' : 'text-sm font-semibold uppercase text-gray-500'
+        }
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function AccountRow({
+  account,
+  siblings,
+}: {
+  account: AccountResponse;
+  siblings: AccountResponse[] | null;
+}) {
+  const { i18n } = useTranslation();
+  const qualifier = siblings ? accountLabelParts(account, siblings).qualifier : null;
+  return (
+    <View
+      className={`flex-row items-center justify-between border-b border-gray-100 py-3 ${siblings ? '' : 'pl-4'}`}
+    >
+      <View className="flex-1">
+        <Text className="text-base" numberOfLines={1}>
+          {account.name}
+        </Text>
+        {qualifier ? (
+          <Text className="text-sm text-gray-500" numberOfLines={1}>
+            {qualifier}
+          </Text>
+        ) : null}
+      </View>
+      <Text className="ml-3 text-base font-semibold">
+        {formatMoney(account.balance, account.currency, i18n.language)}
+      </Text>
+    </View>
+  );
+}
+
 export function AccountList() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { serverUrl } = useAuth();
   const accounts = useAccounts();
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
@@ -34,53 +101,47 @@ export function AccountList() {
       </View>
     );
 
+  const rows = (group: AccountGroup): Row[] =>
+    group.subgroups
+      ? group.subgroups.flatMap((sub): Row[] => [
+          { type: 'subgroup', group: sub },
+          ...(collapsed.has(sub.key)
+            ? []
+            : sub.accounts.map((account): Row => ({ type: 'account', account, siblings: null }))),
+        ])
+      : group.accounts.map((account) => ({ type: 'account', account, siblings: group.accounts }));
+
   return (
     <SectionList
       testID="accounts"
-      sections={buildAccountGroups(accounts.data).map((g) => ({
-        ...g,
-        data: collapsed.has(g.key) ? [] : g.accounts,
+      sections={buildAccountGroups(accounts.data).map((group) => ({
+        ...group,
+        data: collapsed.has(group.key) ? [] : rows(group),
       }))}
-      keyExtractor={(a) => a.id}
+      keyExtractor={(row) => (row.type === 'account' ? row.account.id : row.group.key)}
       refreshing={accounts.isRefetching}
       onRefresh={() => void accounts.refetch()}
       stickySectionHeadersEnabled={false}
       contentContainerClassName="flex-grow px-4"
-      renderSectionHeader={({ section }) => {
-        const isCollapsed = collapsed.has(section.key);
-        return (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={section.label}
-            accessibilityState={{ expanded: !isCollapsed }}
-            onPress={() => toggle(section.key)}
-            className="flex-row items-center pb-1 pt-4"
-          >
-            <Text className="w-4 text-sm text-gray-500">{isCollapsed ? '▸' : '▾'}</Text>
-            <Text className="text-sm font-semibold uppercase text-gray-500">{section.label}</Text>
-          </Pressable>
-        );
-      }}
-      renderItem={({ item, section }) => {
-        const { qualifier } = accountLabelParts(item, section.accounts);
-        return (
-          <View className="flex-row items-center justify-between border-b border-gray-100 py-3">
-            <View className="flex-1">
-              <Text className="text-base" numberOfLines={1}>
-                {item.name}
-              </Text>
-              {qualifier ? (
-                <Text className="text-sm text-gray-500" numberOfLines={1}>
-                  {qualifier}
-                </Text>
-              ) : null}
-            </View>
-            <Text className="ml-3 text-base font-semibold">
-              {formatMoney(item.balance, item.currency, i18n.language)}
-            </Text>
-          </View>
-        );
-      }}
+      renderSectionHeader={({ section }) => (
+        <GroupHeader
+          label={section.label}
+          collapsed={collapsed.has(section.key)}
+          onToggle={() => toggle(section.key)}
+        />
+      )}
+      renderItem={({ item }) =>
+        item.type === 'subgroup' ? (
+          <GroupHeader
+            label={item.group.label}
+            collapsed={collapsed.has(item.group.key)}
+            nested
+            onToggle={() => toggle(item.group.key)}
+          />
+        ) : (
+          <AccountRow account={item.account} siblings={item.siblings} />
+        )
+      }
       ListEmptyComponent={
         <View className="flex-1 items-center justify-center p-6">
           <Text className="text-center text-base text-gray-700">{t('home.noAccounts')}</Text>

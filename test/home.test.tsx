@@ -175,6 +175,30 @@ describe('account list', () => {
     expect(screen.getByText('Pocket')).toBeTruthy();
   });
 
+  it('splits a large section by bank, with collapsible sub-groups', async () => {
+    const bankAccount = (id: string, bankName: string) =>
+      account({ id, name: `Card ${id}`, subtype: { type: 'bankAccount', bankName } });
+    backend({
+      accounts: () => [
+        bankAccount('1', 'Mono'),
+        bankAccount('2', 'Privat'),
+        bankAccount('3', 'Mono'),
+        bankAccount('4', 'Privat'),
+        bankAccount('5', 'Mono'),
+        bankAccount('6', 'Privat'),
+      ],
+    });
+    await renderHome();
+    const mono = await screen.findByRole('button', { name: 'Mono' });
+    expect(screen.getByRole('button', { name: 'Privat' })).toBeTruthy();
+    // The sub-header already names the bank, so rows show the bare name.
+    expect(screen.queryAllByText('Mono')).toHaveLength(1);
+
+    await fireEvent.press(mono);
+    expect(screen.queryByText('Card 1')).toBeNull();
+    expect(screen.getByText('Card 2')).toBeTruthy();
+  });
+
   it('refetches on pull-to-refresh', async () => {
     const seen = backend();
     await renderHome();

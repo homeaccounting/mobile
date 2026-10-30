@@ -64,6 +64,15 @@
     "group": {
       "other": "Інше",
       "sharedWithMe": "Надано мені"
+    },
+    "assetType": {
+      "property": "Нерухомість",
+      "vehicle": "Транспорт",
+      "stocks": "Акції",
+      "retirementFund": "Пенсійний фонд",
+      "electronics": "Електроніка",
+      "equipment": "Обладнання",
+      "furniture": "Меблі"
     }
   }
 }
