@@ -95,7 +95,7 @@ Jest via `jest-expo`, with React Native Testing Library.
 - API tests use the fetch helper in `test/fetch.ts`.
 - Every new user-facing string goes in both `src/i18n/locales/en.json` and `src/i18n/locales/uk.json`.
 
-**E2E.** `just e2e` runs the Maestro flows in `e2e/` against a local backend (`just run` in `../backend`) with `LLM_API_KEY` set, since the flow records a real prompt. Start the dev build first, with the device in English. On Android, pass the emulator's view of the host: `just e2e http://10.0.2.2:8080`. `e2e/seed.js` runs on the host and creates a fresh user with a 100 USD account each run.
+**E2E.** `just e2e` runs the Maestro flows in `e2e/` against a local backend (`just run` in `../backend`) with `LLM_API_KEY` set, since the flow records a real prompt. Start the dev build first, with the device in English. On Android, pass the emulator's view of the host: `just e2e http://10.0.2.2:8080`. `e2e/seed.js` runs on the host and creates a fresh user each run, with a 100 USD account as their default (the prompt records to the default account). The flow clears the app's data, so it signs the device out. It passes on the Android emulator; on the iOS simulator (Xcode 27, no Simulator.app) Maestro can't type into the password field, so iOS runs stop at sign-in.
 
 ```bash
 pnpm exec jest -t "name"        # filter by test name
