@@ -23,6 +23,8 @@ export function ServerField({ value, onChange, error }: Props) {
           keyboardType="url"
           placeholder={t('auth.serverPlaceholder')}
           accessibilityLabel={t('auth.server')}
+          // Opened by "Change", so focus it with the cursor at the end, ready to edit.
+          autoFocus
           className="rounded-lg border border-gray-300 px-3 py-2 text-base"
         />
       ) : (
