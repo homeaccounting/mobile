@@ -153,6 +153,28 @@ describe('account list', () => {
     expect(texts.filter((x) => order.includes(x))).toEqual(order);
   });
 
+  it('collapses and expands a group from its header', async () => {
+    backend({
+      accounts: () => [
+        account({ id: 'c', name: 'Pocket', subtype: { type: 'cash' } }),
+        account({ id: 'b', name: 'Card', subtype: { type: 'bankAccount' } }),
+      ],
+    });
+    await renderHome();
+    const header = await screen.findByRole('button', { name: 'Cash' });
+    expect(header.props.accessibilityState).toMatchObject({ expanded: true });
+
+    await fireEvent.press(header);
+    expect(screen.queryByText('Pocket')).toBeNull();
+    expect(screen.getByText('Card')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Cash' }).props.accessibilityState).toMatchObject({
+      expanded: false,
+    });
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Cash' }));
+    expect(screen.getByText('Pocket')).toBeTruthy();
+  });
+
   it('refetches on pull-to-refresh', async () => {
     const seen = backend();
     await renderHome();
