@@ -125,6 +125,34 @@ describe('account list', () => {
     expect(screen.queryByText('Old card')).toBeNull();
   });
 
+  it('groups accounts by kind, sorted by name, with identifying qualifiers', async () => {
+    backend({
+      accounts: () => [
+        account({ id: 'z', name: 'Zoo card', subtype: { type: 'bankAccount', bankName: 'Mono' } }),
+        account({ id: 's', name: 'Shared', role: 'viewer' }),
+        account({ id: 'c', name: 'Pocket', subtype: { type: 'cash' } }),
+        account({ id: 'a', name: 'Amex', subtype: { type: 'bankAccount' } }),
+      ],
+    });
+    await renderHome();
+    await screen.findByText('Zoo card');
+    const texts = screen
+      .getAllByText(/./)
+      .map((n) => n.props.children as unknown)
+      .filter((c): c is string => typeof c === 'string');
+    const order = [
+      'Cash',
+      'Pocket',
+      'Bank account',
+      'Amex',
+      'Zoo card',
+      'Mono',
+      'Shared with me',
+      'Shared',
+    ];
+    expect(texts.filter((x) => order.includes(x))).toEqual(order);
+  });
+
   it('refetches on pull-to-refresh', async () => {
     const seen = backend();
     await renderHome();

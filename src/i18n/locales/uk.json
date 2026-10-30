@@ -52,5 +52,18 @@
   "languages": {
     "en": "English",
     "uk": "Українська"
+  },
+  "accounts": {
+    "subtype": {
+      "cash": "Готівка",
+      "bankAccount": "Банківський рахунок",
+      "eWallet": "Електронний гаманець",
+      "asset": "Актив",
+      "loan": "Кредит"
+    },
+    "group": {
+      "other": "Інше",
+      "sharedWithMe": "Надано мені"
+    }
   }
 }

@@ -52,5 +52,18 @@
   "languages": {
     "en": "English",
     "uk": "Українська"
+  },
+  "accounts": {
+    "subtype": {
+      "cash": "Cash",
+      "bankAccount": "Bank account",
+      "eWallet": "E-wallet",
+      "asset": "Asset",
+      "loan": "Loan"
+    },
+    "group": {
+      "other": "Other",
+      "sharedWithMe": "Shared with me"
+    }
   }
 }
