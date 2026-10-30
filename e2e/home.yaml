@@ -1,0 +1,45 @@
+# Email sign-in → accounts → prompt → balance changes.
+# Needs a local backend with LLM_API_KEY set and the dev build running; see `just e2e`.
+appId: com.homeaccounting.app
+env:
+  # The seed script runs on the host. The app's view of the backend (SERVER_URL) is passed
+  # with -e and defaulted where it's used, since a value here would override -e.
+  API_URL: http://localhost:8080
+---
+- runScript: seed.js
+- runFlow: subflows/launch.yaml
+# The iOS keychain survives clearState, so an earlier run may still be signed in there.
+- runFlow:
+    when:
+      visible: Settings
+    commands:
+      - tapOn: Settings
+      - tapOn: Sign out
+# Hide the keyboard between fields so the next tap isn't swallowed by it.
+- tapOn: Email
+- inputText: ${output.email}
+- hideKeyboard
+- tapOn: Password
+- inputText: ${output.password}
+- hideKeyboard
+# Change focuses the field with the cursor at the end, so erasing clears it.
+- tapOn: Change
+- eraseText: 100
+- inputText: "${typeof SERVER_URL === 'undefined' ? 'http://localhost:8080' : SERVER_URL}"
+- hideKeyboard
+- tapOn: Sign in
+- extendedWaitUntil:
+    visible: Settings|Not now|Never
+    timeout: 30000
+- waitForAnimationToEnd
+- runFlow: subflows/decline-save-password.yaml
+- assertVisible: Wallet
+# Text selectors are regexes.
+- assertVisible: \$100\.00
+- tapOn: What did you spend or earn?
+- inputText: coffee 4.50
+- tapOn: Send
+- extendedWaitUntil:
+    visible: .*· Wallet
+    timeout: 60000
+- assertVisible: \$95\.50

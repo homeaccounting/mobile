@@ -60,6 +60,8 @@
           # React Native's Android Gradle plugin needs JDK 17+.
           jdk17
           androidSdk
+          # E2E flows in e2e/ (`just e2e`).
+          maestro
         ] ++ lib.optionals stdenv.isDarwin [
           # Xcode itself comes from the system config (App Store); it cannot be
           # packaged in a project shell.
@@ -73,6 +75,7 @@
           buildInputs = devDependencies;
           JAVA_HOME = pkgs.jdk17.home;
           ANDROID_HOME = "${androidSdk}/libexec/android-sdk";
+          MAESTRO_CLI_NO_ANALYTICS = "1";
           shellHook = ''
             echo "💰 HomeAccounting Mobile Development Environment"
             echo "📦 Node version: $(node --version)"
@@ -88,6 +91,7 @@
             echo "  • just test            - Run tests"
             echo "  • just check           - typecheck + lint + format-check"
             echo "  • just native-verify   - export iOS/Android bundles (no simulator)"
+            echo "  • just e2e             - Maestro E2E flows (local backend)"
             echo ""
             echo "🚀 Get started: just install && just ios-setup && just ios-run"
           '';

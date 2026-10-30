@@ -68,6 +68,12 @@ describe('SignIn', () => {
     expect(screen.queryByText(t('auth.localNetworkHint'))).toBeNull();
   });
 
+  it('focuses the server field when Change is pressed', async () => {
+    await setup();
+    await fireEvent.press(screen.getByRole('button', { name: t('auth.change') }));
+    expect(screen.getByLabelText(t('auth.server')).props.autoFocus).toBe(true);
+  });
+
   it('rejects an insecure server without a request', async () => {
     await setup();
     const seen = mockFetch(() => ({ status: 200 }));

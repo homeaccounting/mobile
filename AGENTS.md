@@ -48,6 +48,7 @@ just check              # typecheck + lint + format-check
 just test               # jest
 just expo-doctor        # expo-doctor
 just native-verify      # expo export for ios + android into a temp dir (no simulator needed)
+just e2e [server]       # Maestro flows in e2e/ on the booted simulator/emulator
 just lockfile-fix       # rewrite private-registry URLs in pnpm-lock.yaml
 just clean              # remove node_modules/.expo/ios/android/coverage
 ```
@@ -63,9 +64,11 @@ plugins/   # Local config plugins (Sign in with Apple switch)
 src/
 ├── api/   # Typed HTTP client, ported from web and trimmed to the MVP
 ├── auth/  # Sign-in: serverUrl, session, api, errors, AuthProvider, nonce, providers, SignInProviders
+├── home/  # Home screen: account list, prompt bar, result card, settings sheet
 ├── i18n/  # i18next setup; strings in locales/{en,uk}.json
 └── lib/   # Utilities (queryClient, …)
 test/      # Tests for routes and shared test helpers (fetch.ts)
+e2e/       # Maestro flows and their seed script
 ```
 
 - `src/api` is ported from `web`. Keep the shapes in sync with `web/src/api/types.ts`, which mirrors the backend types.
@@ -91,6 +94,8 @@ Jest via `jest-expo`, with React Native Testing Library.
 - **Never put tests under `app/`.** Expo Router bundles every file in `app/` as a route. Tests live in `test/` or next to the module under `src/` (`*.test.ts` / `*.test.tsx`).
 - API tests use the fetch helper in `test/fetch.ts`.
 - Every new user-facing string goes in both `src/i18n/locales/en.json` and `src/i18n/locales/uk.json`.
+
+**E2E.** `just e2e` runs the Maestro flows in `e2e/` against a local backend (`just run` in `../backend`) with `LLM_API_KEY` set, since the flow records a real prompt. Start the dev build first, with the device in English. On Android, pass the emulator's view of the host: `just e2e http://10.0.2.2:8080`. `e2e/seed.js` runs on the host and creates a fresh user each run, with a 100 USD account as their default (the prompt records to the default account). The flow clears the app's data, so it signs the device out. It passes on the Android emulator; on the iOS simulator (Xcode 27, no Simulator.app) Maestro can't type into the password field, so iOS runs stop at sign-in.
 
 ```bash
 pnpm exec jest -t "name"        # filter by test name

@@ -4,6 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { AuthProvider, useAuth } from '@/auth/AuthProvider';
+import { loadLanguage } from '@/i18n/language';
 import { queryClient } from '@/lib/queryClient';
 
 // Keep the splash up until the stored session is known, so the wrong stack never flashes.
@@ -30,6 +31,9 @@ function RootStack() {
 }
 
 export default function RootLayout() {
+  useEffect(() => {
+    void loadLanguage();
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

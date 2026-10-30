@@ -67,6 +67,11 @@ check: typecheck lint format-check
 test:
     pnpm exec jest
 
+# Maestro E2E flows on the booted simulator/emulator, against a local backend with LLM_API_KEY
+# set and the dev build running. Android reaches the host at 10.0.2.2: just e2e http://10.0.2.2:8080
+e2e server="http://localhost:8080":
+    maestro test -e SERVER_URL={{server}} e2e
+
 # Expo's project health check (dependency versions, config)
 expo-doctor:
     pnpm dlx expo-doctor

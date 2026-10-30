@@ -1,0 +1,18 @@
+# Open the dev build on Metro, signed out where possible, past the save-password sheet.
+appId: com.homeaccounting.app
+---
+# clearState wipes the stored session on Android; the iOS keychain survives it (see home.yaml).
+# It also resets permissions, and the dev launcher then asks for nearby-device access to find
+# Metro; granting it up front keeps that prompt away (a denial is asked again).
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+# A link sent while the dev launcher is still starting is lost, so cold-start through it.
+- stopApp
+# Open the dev build on Metro without the dev menu's floating button, which covers the header.
+- openLink: "homeaccounting://expo-development-client/?url=${encodeURIComponent(typeof METRO_URL === 'undefined' ? 'http://localhost:8081' : METRO_URL)}&__expo_disable_fab=1&__expo_disable_onboarding=1&__expo_disable_auto_launch=1"
+- extendedWaitUntil:
+    visible: Settings|Sign in|Not now|Never
+    timeout: 60000
+- runFlow: decline-save-password.yaml
