@@ -107,11 +107,14 @@ jobs:
           # Google's sign-in WebView crashes without swiftshader (see AGENTS.md).
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           disable-animations: true
-          # Each line runs in its own shell.
+          ram-size: 4096M
+          cores: 4
+          # Each line runs in its own shell; logcat is saved here because the emulator is gone
+          # by the upload step.
           script: |
             adb install android/app/build/outputs/apk/debug/app-debug.apk
             adb reverse tcp:8081 tcp:8081
-            maestro test --debug-output maestro-debug -e SERVER_URL=http://10.0.2.2:8080 e2e
+            maestro test --debug-output maestro-debug -e SERVER_URL=http://10.0.2.2:8080 e2e || { adb logcat -d > logcat.txt; exit 1; }
 
       - if: failure()
         run: docker logs backend > backend.log 2>&1
@@ -124,4 +127,7 @@ jobs:
             metro.log
             fake-llm.log
             backend.log
+            logcat.txt
+          # The first run's maestro-debug/ upload came back empty; hidden files are skipped by default.
+          include-hidden-files: true
           if-no-files-found: ignore
