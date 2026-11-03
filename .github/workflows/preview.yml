@@ -1,0 +1,35 @@
+name: Preview
+
+# Every merge to master reaches preview installs: a new EAS build (an APK link through internal
+# distribution) when the native code changed, otherwise an OTA update. See `just eas-release-preview`.
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# Queued rather than cancelled, so each merge's build-or-update decision sees the previous one.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Build or update
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq just
+      - run: pnpm install --frozen-lockfile
+      - run: just eas-release-preview
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}

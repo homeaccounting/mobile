@@ -69,8 +69,48 @@ test:
 
 # Maestro E2E flows on the booted simulator/emulator, against a local backend with LLM_API_KEY
 # set and the dev build running. Android reaches the host at 10.0.2.2: just e2e http://10.0.2.2:8080
-e2e server="http://localhost:8080":
-    maestro test -e SERVER_URL={{server}} e2e
+e2e server="http://localhost:8080" *args:
+    maestro test {{args}} -e SERVER_URL={{server}} e2e
+
+# Fake OpenAI-compatible LLM answering the E2E prompt; set the backend's LLM_BASE_URL to http://<host>:<port>/v1
+e2e-fake-llm port="8090":
+    PORT={{port}} node e2e/fake-llm.js
+
+# Debug APK of the dev build, without a device (CI's E2E job installs it on its emulator)
+android-build-apk:
+    pnpm exec expo prebuild --platform android --no-install
+    cd android && ./gradlew assembleDebug
+
+# Hash of the native code for an EAS build profile; builds and OTA updates match on it
+eas-fingerprint profile="preview" platform="android":
+    @pnpm exec eas fingerprint:generate --platform {{platform}} --build-profile {{profile}} --json --non-interactive | node -p 'JSON.parse(require("fs").readFileSync(0)).hash'
+
+# Start an EAS cloud build (returns once queued; the link is printed and on expo.dev)
+eas-build profile="preview" platform="android":
+    pnpm exec eas build --profile {{profile}} --platform {{platform}} --non-interactive --no-wait
+
+# Publish the current JS as an OTA update; it reaches builds with the same fingerprint
+eas-update channel="preview" platform="android":
+    pnpm exec eas update --channel {{channel}} --platform {{platform}} --auto --non-interactive
+
+# Run by CI on merge to master: a preview build if no build has this native fingerprint, else an OTA update
+eas-release-preview:
+    #!/usr/bin/env sh
+    set -eu
+    hash=$(just eas-fingerprint preview android)
+    builds=$(pnpm exec eas build:list --platform android --build-profile preview --fingerprint-hash "$hash" --limit 10 --json --non-interactive)
+    usable=$(echo "$builds" | node -p 'JSON.parse(require("fs").readFileSync(0)).filter(b => !["ERRORED", "CANCELED"].includes(b.status)).length')
+    if [ "$usable" -gt 0 ]; then
+        echo "A preview build has fingerprint $hash: publishing an OTA update"
+        just eas-update preview android
+    else
+        echo "No preview build has fingerprint $hash: starting one"
+        just eas-build preview android
+    fi
+
+# Signing keys EAS holds for the app (interactive), e.g. to read the SHA-1 for Google sign-in
+eas-credentials platform="android":
+    pnpm exec eas credentials --platform {{platform}}
 
 # Expo's project health check (dependency versions, config)
 expo-doctor:
