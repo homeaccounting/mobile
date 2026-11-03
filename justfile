@@ -69,7 +69,7 @@ test:
 
 # Maestro E2E flows on the booted simulator/emulator, against a local backend with LLM_API_KEY
 # set and the dev build running. Android reaches the host at 10.0.2.2: just e2e http://10.0.2.2:8080
-e2e server="http://localhost:8080" *args:
+e2e server="http://localhost:8080" *args="":
     maestro test {{args}} -e SERVER_URL={{server}} e2e
 
 # Fake OpenAI-compatible LLM answering the E2E prompt; set the backend's LLM_BASE_URL to http://<host>:<port>/v1
