@@ -25,6 +25,8 @@ Local installs may go through the org npm mirror, so run `just install` (which m
 
 The app runs as a **dev build** (`just ios-run` / `just android-run`), not Expo Go. `ios/` and `android/` are generated and gitignored — change native config through `app.json` / config plugins only.
 
+**EAS.** The project is `@homeaccounting/homeaccounting` on expo.dev (the `homeaccounting` organization). `eas.json` has `development`, `preview` and `production` profiles, with the version kept on EAS (`appVersionSource: remote`). The runtime version is the native-code fingerprint, so an OTA update reaches only builds whose native code matches. On every merge to `master`, `.github/workflows/preview.yml` runs `just eas-release-preview`: a new `preview` build (an APK through internal distribution) if no build has the current fingerprint, otherwise an OTA update on the `preview` channel. So a native change (a new native package, an `app.json` plugin change) costs a cloud build and a JS-only change doesn't. CI authenticates with `EXPO_TOKEN`, a robot token declared in `../infra`. EAS holds the Android keystore; the preview builds' signing SHA-1 is different from the debug keystore's, so Google sign-in in a preview build needs its own Android OAuth client (`just eas-credentials` shows the SHA-1). `eas-cli` is a pinned dev dependency: run it as `pnpm exec eas` or through the recipes.
+
 **Android emulator.** Start it with `just android-emulator` before `just android-run`: it needs `-gpu swiftshader_indirect`, or Google's sign-in WebView crashes. Google sign-in also needs a Google account added in the emulator's Settings.
 
 **Local backend.** Use server `http://localhost:8080` on the iOS simulator and `http://10.0.2.2:8080` on the Android emulator; the backend needs `ID_TOKEN_SERVER_URLS=http://10.0.2.2:8080` for the latter.
@@ -49,6 +51,13 @@ just test               # jest
 just expo-doctor        # expo-doctor
 just native-verify      # expo export for ios + android into a temp dir (no simulator needed)
 just e2e [server]       # Maestro flows in e2e/ on the booted simulator/emulator
+just e2e-fake-llm       # fake OpenAI-compatible LLM for E2E without a real key
+just android-build-apk  # debug APK of the dev build (prebuild + Gradle)
+just eas-build          # EAS cloud build (default: preview, android)
+just eas-update         # OTA update (default: preview channel, android)
+just eas-fingerprint    # native-code hash that builds and updates match on
+just eas-release-preview # what CI runs on merge: build if the fingerprint is new, else update
+just eas-credentials    # signing keys EAS holds (e.g. the SHA-1 for Google sign-in)
 just lockfile-fix       # rewrite private-registry URLs in pnpm-lock.yaml
 just clean              # remove node_modules/.expo/ios/android/coverage
 ```

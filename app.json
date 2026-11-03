@@ -2,6 +2,7 @@
   "expo": {
     "name": "HomeAccounting",
     "slug": "homeaccounting",
+    "owner": "homeaccounting",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -73,6 +74,17 @@
     "locales": {
       "en": "./src/i18n/native/en.json",
       "uk": "./src/i18n/native/uk.json"
+    },
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/4376cc3e-8d74-4326-b8e2-7d2ba7556110"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "4376cc3e-8d74-4326-b8e2-7d2ba7556110"
+      }
     }
   }
 }

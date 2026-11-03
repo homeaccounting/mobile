@@ -10,6 +10,7 @@ on:
     paths:
       - 'e2e/**'
       - '.github/workflows/e2e.yml'
+      - 'justfile'
   workflow_dispatch:
 
 concurrency:
@@ -47,10 +48,11 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq just
       - run: pnpm install --frozen-lockfile
 
       - name: Start the fake LLM
-        run: PORT=8090 nohup node e2e/fake-llm.js > fake-llm.log 2>&1 &
+        run: nohup just e2e-fake-llm 8090 > fake-llm.log 2>&1 &
       # Host networking lets the backend reach Postgres and the fake LLM on localhost, and the
       # emulator reach the backend on 10.0.2.2:8080. The empty variables are ones prod.yaml requires.
       - name: Start the backend
@@ -75,11 +77,9 @@ jobs:
           exit 1
 
       - name: Build the debug APK
-        run: |
-          pnpm exec expo prebuild --platform android --no-install
-          cd android && ./gradlew assembleDebug
+        run: just android-build-apk
       - name: Start Metro
-        run: nohup pnpm start > metro.log 2>&1 &
+        run: nohup just metro-start > metro.log 2>&1 &
       # Build the bundle once now, so the app's first load fits in the flow's launch wait.
       - name: Warm the Metro bundle
         run: |
@@ -114,7 +114,7 @@ jobs:
           script: |
             adb install android/app/build/outputs/apk/debug/app-debug.apk
             adb reverse tcp:8081 tcp:8081
-            maestro test --debug-output maestro-debug -e SERVER_URL=http://10.0.2.2:8080 e2e || { adb logcat -d > logcat.txt; exit 1; }
+            just e2e http://10.0.2.2:8080 --debug-output maestro-debug || { adb logcat -d > logcat.txt; exit 1; }
 
       - if: failure()
         run: docker logs backend > backend.log 2>&1
