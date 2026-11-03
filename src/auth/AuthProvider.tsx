@@ -9,9 +9,9 @@ import {
 } from 'react';
 import { authApi } from '@/api/auth';
 import { queryClient } from '@/lib/queryClient';
-import { ApiError } from '@/api/client';
+import { ApiError, type ApiClient } from '@/api/client';
 import type { IdTokenProvider } from '@/api/types';
-import { assertTokenPair, createUnauthenticatedClient } from './api';
+import { assertTokenPair, createAppClient, createUnauthenticatedClient } from './api';
 import { bindNonce, newRawNonce } from './nonce';
 import { nativeSignIn } from './providers';
 import { parseServerUrl } from './serverUrl';
@@ -21,7 +21,10 @@ export type AuthInput = { email: string; password: string; serverUrl: string };
 type Status = 'loading' | 'signedOut' | 'signedIn';
 interface AuthContextValue {
   status: Status;
+  serverUrl: string | null;
   lastServerUrl: string | null;
+  /** Authenticated client for the current session. */
+  client: ApiClient;
   signIn(i: AuthInput): Promise<void>;
   register(i: AuthInput): Promise<void>;
   signInWithProvider(
@@ -45,6 +48,8 @@ export function AuthProvider({
   // The session snapshot stays null across a load that finds nothing, so loaded needs its own subscription.
   const loaded = useSyncExternalStore(subscribe, () => store.isLoaded());
   const status: Status = !loaded ? 'loading' : session ? 'signedIn' : 'signedOut';
+  const serverUrl = session?.serverUrl ?? null;
+  const client = useMemo(() => createAppClient(store), [store]);
 
   useEffect(() => {
     void store.load();
@@ -87,7 +92,9 @@ export function AuthProvider({
     };
     return {
       status,
+      serverUrl,
       lastServerUrl: store.lastServerUrl(),
+      client,
       signIn: (i) => start('login', i),
       register: (i) => start('register', i),
       async signInWithProvider(provider, input) {
@@ -114,7 +121,7 @@ export function AuthProvider({
             .catch(() => undefined);
       },
     };
-  }, [status, store]);
+  }, [status, serverUrl, client, store]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

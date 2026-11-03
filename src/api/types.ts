@@ -54,6 +54,10 @@ export interface AccountSubtype {
   [key: string]: unknown;
 }
 
+// Subtype kinds in display order — mirrors web/src/api/types.ts ACCOUNT_SUBTYPE_TYPES.
+export const ACCOUNT_SUBTYPE_TYPES = ['cash', 'bankAccount', 'eWallet', 'asset', 'loan'] as const;
+export type AccountSubtypeType = (typeof ACCOUNT_SUBTYPE_TYPES)[number];
+
 // Account lifecycle status. Mirrors backend fromAccountStatus
 // (../backend/src/Web/Types.hs:793-795): every account starts "Opened".
 export type AccountStatus = 'Opened' | 'Closed';

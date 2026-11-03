@@ -1,0 +1,133 @@
+name: E2E
+
+# Nightly Maestro run of e2e/ on an Android emulator, against the published backend image and a
+# fake LLM (e2e/fake-llm.js), so it needs no secrets. Not part of the required "CI" check.
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  pull_request:
+    paths:
+      - 'e2e/**'
+      - '.github/workflows/e2e.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: Android
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: ha
+          POSTGRES_PASSWORD: ha
+          POSTGRES_DB: ha
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ha" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - run: pnpm install --frozen-lockfile
+
+      - name: Start the fake LLM
+        run: PORT=8090 nohup node e2e/fake-llm.js > fake-llm.log 2>&1 &
+      # Host networking lets the backend reach Postgres and the fake LLM on localhost, and the
+      # emulator reach the backend on 10.0.2.2:8080. The empty variables are ones prod.yaml requires.
+      - name: Start the backend
+        run: |
+          docker run -d --name backend --network host \
+            -e CONFIG_FILE=config/prod.yaml \
+            -e DB_HOST=localhost -e DB_PORT=5432 -e DB_USER=ha -e DB_PASSWORD=ha -e DB_NAME=ha \
+            -e JWT_SECRET="$(openssl rand -hex 32)" \
+            -e BANKING_TOKEN_ENC_KEY="$(openssl rand -base64 32)" \
+            -e API_BASE_URL=http://localhost:8080 -e APP_BASE_URL=http://localhost:8080 \
+            -e GOOGLE_CLIENT_ID= -e GOOGLE_CLIENT_SECRET= \
+            -e GITHUB_CLIENT_ID= -e GITHUB_CLIENT_SECRET= \
+            -e MICROSOFT_CLIENT_ID= -e MICROSOFT_CLIENT_SECRET= \
+            -e TELEGRAM_BOT_TOKEN= -e TELEGRAM_BOT_USERNAME= \
+            -e LLM_BASE_URL=http://localhost:8090/v1 -e LLM_API_KEY=fake -e LLM_MODEL=fake \
+            ghcr.io/homeaccounting/backend:latest
+          for _ in $(seq 60); do
+            curl -sf http://localhost:8080/api/auth/providers && exit 0
+            sleep 2
+          done
+          docker logs backend
+          exit 1
+
+      - name: Build the debug APK
+        run: |
+          pnpm exec expo prebuild --platform android --no-install
+          cd android && ./gradlew assembleDebug
+      - name: Start Metro
+        run: nohup pnpm start > metro.log 2>&1 &
+      # Build the bundle once now, so the app's first load fits in the flow's launch wait.
+      - name: Warm the Metro bundle
+        run: |
+          for _ in $(seq 60); do curl -sf http://localhost:8081/status && break; sleep 2; done
+          curl -sf -o /dev/null 'http://localhost:8081/.expo/.virtual-metro-entry.bundle?platform=android&dev=true'
+      - name: Install Maestro
+        run: |
+          curl -fsSL https://get.maestro.mobile.dev | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+        env:
+          MAESTRO_VERSION: 2.4.0
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Run the flows
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          MAESTRO_CLI_NO_ANALYTICS: 1
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          # Google's sign-in WebView crashes without swiftshader (see AGENTS.md).
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          disable-animations: true
+          ram-size: 4096M
+          cores: 4
+          # Each line runs in its own shell; logcat is saved here because the emulator is gone
+          # by the upload step.
+          script: |
+            adb install android/app/build/outputs/apk/debug/app-debug.apk
+            adb reverse tcp:8081 tcp:8081
+            maestro test --debug-output maestro-debug -e SERVER_URL=http://10.0.2.2:8080 e2e || { adb logcat -d > logcat.txt; exit 1; }
+
+      - if: failure()
+        run: docker logs backend > backend.log 2>&1
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-logs
+          path: |
+            maestro-debug/
+            metro.log
+            fake-llm.log
+            backend.log
+            logcat.txt
+          # The first run's maestro-debug/ upload came back empty; hidden files are skipped by default.
+          include-hidden-files: true
+          if-no-files-found: ignore

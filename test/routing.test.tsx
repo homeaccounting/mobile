@@ -37,6 +37,6 @@ it('opens home at / when signed in', async () => {
     'ha.refreshToken': 'r',
   });
   const router = await renderRouter(routes, { initialUrl: '/' });
-  expect(await screen.findByRole('button', { name: i18n.t('home.signOut') })).toBeTruthy();
+  expect(await screen.findByRole('button', { name: i18n.t('home.settings') })).toBeTruthy();
   expect(router.getPathname()).toBe('/');
 });
