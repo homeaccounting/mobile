@@ -116,13 +116,21 @@ eas-credentials platform="android":
 expo-doctor:
     pnpm dlx expo-doctor
 
-# Bundle for iOS and Android without a simulator (catches Metro/resolution errors)
+# Release JS bundles for iOS and Android without a simulator (catches Metro/resolution errors).
+# Runs the CLI with plain node and no NODE_PATH, as Gradle and Xcode do: `pnpm exec` sets NODE_PATH,
+# which hides packages missing from the project's node_modules.
 native-verify:
     #!/usr/bin/env sh
     set -eu
     out=$(mktemp -d)
     trap 'rm -rf "$out"' EXIT
-    pnpm exec expo export --platform ios --platform android --output-dir "$out"
+    cli=$(node -p "require.resolve('@expo/cli', {paths: [require.resolve('expo/package.json')]})")
+    for platform in ios android; do
+        mkdir -p "$out/$platform"
+        env -u NODE_PATH NODE_ENV=production node "$cli" export:embed --platform "$platform" --dev false \
+            --entry-file node_modules/expo-router/entry.js \
+            --bundle-output "$out/$platform/index.bundle" --assets-dest "$out/$platform"
+    done
 
 clean:
     rm -rf node_modules .expo ios android coverage

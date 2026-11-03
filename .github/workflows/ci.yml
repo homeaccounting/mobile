@@ -35,6 +35,9 @@ jobs:
       - run: pnpm exec eslint .
       - run: pnpm exec prettier --check .
       - run: pnpm exec jest --ci
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq just
+      # Release bundles as EAS's Gradle/Xcode build them, so a resolution error fails here, not in a cloud build.
+      - run: just native-verify
       # Non-blocking: the org npm mirror used to lock dependencies lags public npm by a patch release for a few Expo packages (tracker#95). Remove once `expo install --fix` can be run.
       # expo-doctor is not a project dependency, so `pnpm exec` cannot find it; dlx fetches it.
       - run: pnpm dlx expo-doctor

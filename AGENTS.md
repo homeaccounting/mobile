@@ -49,7 +49,7 @@ just format-check       # prettier --check .
 just check              # typecheck + lint + format-check
 just test               # jest
 just expo-doctor        # expo-doctor
-just native-verify      # expo export for ios + android into a temp dir (no simulator needed)
+just native-verify      # release JS bundles for ios + android, as Gradle/Xcode build them (no simulator needed)
 just e2e [server]       # Maestro flows in e2e/ on the booted simulator/emulator
 just e2e-fake-llm       # fake OpenAI-compatible LLM for E2E without a real key
 just android-build-apk  # debug APK of the dev build (prebuild + Gradle)
@@ -62,7 +62,7 @@ just lockfile-fix       # rewrite private-registry URLs in pnpm-lock.yaml
 just clean              # remove node_modules/.expo/ios/android/coverage
 ```
 
-`just native-verify` is the way to validate native bundling on machines without a simulator. For native config changes, also run `pnpm exec expo prebuild --no-install --clean` (regenerates the gitignored `ios/` and `android/`; run `just clean` afterwards if you don't want them lying around).
+`just native-verify` is the way to validate native bundling on machines without a simulator; CI runs it too. For native config changes, also run `pnpm exec expo prebuild --no-install --clean` (regenerates the gitignored `ios/` and `android/`; run `just clean` afterwards if you don't want them lying around).
 
 ## Architecture
 
@@ -83,6 +83,7 @@ e2e/       # Maestro flows, their seed script and CI's fake LLM
 - `src/api` is ported from `web`. Keep the shapes in sync with `web/src/api/types.ts`, which mirrors the backend types.
 - Path alias `@/*` → `src/*`.
 - `react-native-css-interop` is a direct dependency on purpose, pinned to the version `nativewind` uses. pnpm's strict layout otherwise hides it and Metro cannot resolve NativeWind's `jsx-runtime`. Do not remove it as "unused".
+- `babel-preset-expo` and `@babel/plugin-transform-react-jsx` are direct dev dependencies for the same reason: Babel resolves the names in `babel.config.js` and in NativeWind's preset from the project's `node_modules`. Without them a release build's JS bundle fails (`Cannot find module`) when Gradle runs it with plain `node`; `pnpm exec` and Metro in dev happen to find them anyway, so only EAS and `--dev false` bundles show it.
 
 ## Sign-in and session
 
