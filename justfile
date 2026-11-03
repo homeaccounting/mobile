@@ -98,8 +98,9 @@ eas-release-preview:
     #!/usr/bin/env sh
     set -eu
     hash=$(just eas-fingerprint preview android)
-    builds=$(pnpm exec eas build:list --platform android --build-profile preview --fingerprint-hash "$hash" --limit 10 --json --non-interactive)
-    usable=$(echo "$builds" | node -p 'JSON.parse(require("fs").readFileSync(0)).filter(b => !["ERRORED", "CANCELED"].includes(b.status)).length')
+    # Piped straight into node: dash's echo would expand the `\n` escapes in commit messages and break the JSON.
+    usable=$(pnpm exec eas build:list --platform android --build-profile preview --fingerprint-hash "$hash" --limit 10 --json --non-interactive \
+        | node -p 'JSON.parse(require("fs").readFileSync(0)).filter(b => !["ERRORED", "CANCELED"].includes(b.status)).length')
     if [ "$usable" -gt 0 ]; then
         echo "A preview build has fingerprint $hash: publishing an OTA update"
         just eas-update preview android
