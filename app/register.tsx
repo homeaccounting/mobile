@@ -15,6 +15,7 @@ import { authErrorKey } from '@/auth/errors';
 import { ServerField } from '@/auth/ServerField';
 import { HOSTED_SERVER_URL, parseServerUrl } from '@/auth/serverUrl';
 import { SignInProviders } from '@/auth/SignInProviders';
+import { BrandLogo } from '@/components/BrandLogo';
 
 const schema = z.object({ email: z.email(), password: z.string().min(8) });
 
@@ -81,6 +82,7 @@ export default function Register() {
         contentContainerClassName="flex-grow justify-center p-6"
         keyboardShouldPersistTaps="handled"
       >
+        <BrandLogo className="mb-8 h-24 w-24 self-center" />
         <SignInProviders
           serverInput={serverInput}
           disabled={submitting}

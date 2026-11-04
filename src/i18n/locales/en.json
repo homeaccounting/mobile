@@ -7,6 +7,8 @@
     "close": "Close",
     "server": "Server",
     "language": "Language",
+    "update": "App update",
+    "updateBuiltIn": "built-in",
     "noAccounts": "Create your first account on the web",
     "openWeb": "Open the web app",
     "accountsError": "Couldn't load your accounts.",

@@ -72,6 +72,7 @@ modules/   # Local Expo native modules (autolinked); google-id-token wraps the G
 plugins/   # Local config plugins (Sign in with Apple switch)
 src/
 ├── api/   # Typed HTTP client, ported from web and trimmed to the MVP
+├── components/ # Shared UI (BrandLogo)
 ├── auth/  # Sign-in: serverUrl, session, api, errors, AuthProvider, nonce, providers, SignInProviders
 ├── home/  # Home screen: account list, prompt bar, result card, settings sheet
 ├── i18n/  # i18next setup; strings in locales/{en,uk}.json
