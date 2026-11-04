@@ -1,8 +1,10 @@
 import { Modal, Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import * as Updates from 'expo-updates';
 import { useAuth } from '@/auth/AuthProvider';
 import { SUPPORTED_LANGUAGES } from '@/i18n';
 import { setLanguage } from '@/i18n/language';
+import { updateLabel } from './updateLabel';
 
 interface Props {
   visible: boolean;
@@ -12,6 +14,7 @@ interface Props {
 export function SettingsSheet({ visible, onClose }: Props) {
   const { t, i18n } = useTranslation();
   const auth = useAuth();
+  const update = updateLabel(Updates, t('home.updateBuiltIn'));
   return (
     <Modal
       visible={visible}
@@ -47,6 +50,13 @@ export function SettingsSheet({ visible, onClose }: Props) {
             );
           })}
         </View>
+
+        {update && (
+          <>
+            <Text className="mt-6 text-sm text-gray-500">{t('home.update')}</Text>
+            <Text className="mt-1 text-base">{update}</Text>
+          </>
+        )}
 
         <Pressable
           accessibilityRole="button"
