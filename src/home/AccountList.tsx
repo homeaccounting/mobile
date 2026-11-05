@@ -5,12 +5,12 @@ import type { AccountResponse } from '@/api/types';
 import { useAuth } from '@/auth/AuthProvider';
 import { formatMoney } from '@/lib/format';
 import { buildAccountGroups, type AccountGroup } from './accountGroups';
-import { accountLabelParts } from './accountLabel';
+import { accountNameParts } from './accountName';
 import { useAccounts } from './useAccounts';
 
-// `siblings` is null inside a sub-group, whose header already names the institution.
+// `nested` rows sit under a sub-group header that already names the institution.
 type Row =
-  | { type: 'account'; account: AccountResponse; siblings: AccountResponse[] | null }
+  | { type: 'account'; account: AccountResponse; nested: boolean }
   | { type: 'subgroup'; group: AccountGroup };
 
 function GroupHeader({
@@ -44,18 +44,14 @@ function GroupHeader({
   );
 }
 
-function AccountRow({
-  account,
-  siblings,
-}: {
-  account: AccountResponse;
-  siblings: AccountResponse[] | null;
-}) {
+// The short name (ADR 009): the balance shows the currency, and a sub-header
+// the qualifier.
+function AccountRow({ account, nested }: { account: AccountResponse; nested: boolean }) {
   const { i18n } = useTranslation();
-  const qualifier = siblings ? accountLabelParts(account, siblings).qualifier : null;
+  const qualifier = nested ? null : accountNameParts(account).qualifier;
   return (
     <View
-      className={`flex-row items-center justify-between border-b border-gray-100 py-3 ${siblings ? '' : 'pl-4'}`}
+      className={`flex-row items-center justify-between border-b border-gray-100 py-3 ${nested ? 'pl-4' : ''}`}
     >
       <View className="flex-1">
         <Text className="text-base" numberOfLines={1}>
@@ -107,9 +103,9 @@ export function AccountList() {
           { type: 'subgroup', group: sub },
           ...(collapsed.has(sub.key)
             ? []
-            : sub.accounts.map((account): Row => ({ type: 'account', account, siblings: null }))),
+            : sub.accounts.map((account): Row => ({ type: 'account', account, nested: true }))),
         ])
-      : group.accounts.map((account) => ({ type: 'account', account, siblings: group.accounts }));
+      : group.accounts.map((account) => ({ type: 'account', account, nested: false }));
 
   return (
     <SectionList
@@ -139,7 +135,7 @@ export function AccountList() {
             onToggle={() => toggle(item.group.key)}
           />
         ) : (
-          <AccountRow account={item.account} siblings={item.siblings} />
+          <AccountRow account={item.account} nested={item.nested} />
         )
       }
       ListEmptyComponent={
