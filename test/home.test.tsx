@@ -153,6 +153,27 @@ describe('account list', () => {
     expect(texts.filter((x) => order.includes(x))).toEqual(order);
   });
 
+  it('names accounts by qualifier, leaving the currency to the balance', async () => {
+    backend({
+      accounts: () => [
+        account({ id: 'u', name: 'Card', subtype: { type: 'bankAccount', bankName: 'Mono' } }),
+        account({
+          id: 'd',
+          name: 'Card',
+          currency: 'UAH',
+          subtype: { type: 'bankAccount', bankName: 'Mono' },
+        }),
+        account({ id: 'f', name: 'Flat', subtype: { type: 'asset', assetType: 'property' } }),
+      ],
+    });
+    await renderHome();
+    await screen.findByText('Flat');
+    expect(screen.getByText('Property')).toBeTruthy();
+    // Same name and bank in two currencies: the balances tell them apart.
+    expect(screen.getAllByText('Mono')).toHaveLength(2);
+    expect(screen.queryByText(/Mono · /)).toBeNull();
+  });
+
   it('collapses and expands a group from its header', async () => {
     backend({
       accounts: () => [
